@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفوف المعلم - روضتي</title>
+
+    <!-- Bootstrap RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-color: #f5f6fa;
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            color: #273142;
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background-color: #ffffff;
+            min-height: 70px;
+            padding: 0 35px;
+            border-bottom: 1px solid #e8ebef;
+        }
+
+        .navbar-brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-left: 30px;
+            text-decoration: none;
+        }
+
+        .navbar-brand:hover {
+            color: #1f2937;
+        }
+
+        .nav-link {
+            color: #4b5563;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 24px 15px !important;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #2563eb;
+        }
+
+        .nav-link.active {
+            border-bottom: 2px solid #2563eb;
+        }
+
+        /* حساب المعلم */
+        .teacher-profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .teacher-profile-btn:hover {
+            background-color: #f1f5f9;
+        }
+
+        .teacher-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: #eff6ff;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .teacher-dropdown {
+            min-width: 230px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.10);
+        }
+
+        .logout-btn {
+            background-color: transparent;
+            border: 1px solid #dc3545;
+            color: #dc3545;
+            border-radius: 7px;
+            padding: 7px 15px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 40px 30px;
+        }
+
+        .page-title {
+            margin-bottom: 25px;
+        }
+
+        .page-title h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .page-title p {
+            color: #6b7280;
+            margin: 0;
+            font-size: 15px;
+        }
+
+        /* Filter Box */
+        .filter-box {
+            background: #ffffff;
+            border: 1px solid #e8ebef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Class Card */
+        .class-card {
+            border: 1px solid #e8ebef;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: white;
+        }
+
+        .class-header {
+            background-color: #2563eb;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .class-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        table {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            white-space: nowrap;
+        }
+
+        .daily-box {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        @media (max-width: 991px) {
+            .navbar-custom {
+                padding: 10px 20px;
+            }
+
+            .nav-link {
+                padding: 12px 10px !important;
+            }
+
+            .main-container {
+                padding: 25px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid">
+            <!-- حاوية الشعار -->
+            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ asset('images/logo.jpeg') }}"
+                    alt="شعار روضتي"
+                    style="width: 100%; height: 100%; object-fit: contain;">
+            </div>
+
+            <!-- النصوص بجانب الشعار -->
+            <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
+                <span style="font-size: 18px; font-weight: 800; color: #2563eb; line-height: 1.2;">روضتي</span>
+                <span style="font-size: 12px; color: #64748b; margin-top: 2px; font-weight: 500;">لوحة تحكم المعلمة</span>
+            </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#teacherNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="teacherNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}" href="{{ route('teacher.dashboard') }}">الرئيسية</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.students.create') ? 'active' : '' }}" href="{{ route('teacher.students.create') }}">إضافة طفل جديد</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.classes') ? 'active' : '' }}" href="{{ route('teacher.classes') }}">الصفوف المتاحة</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.daily_variables') ? 'active' : '' }}" href="{{ route('teacher.daily_variables') }}">المتغيرات اليومية</a>
+                    </li>
+                </ul>
+
+                <!-- قائمة حساب المعلم -->
+                <div class="dropdown me-3">
+                    <button class="teacher-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="teacher-avatar">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-dark fs-6">{{ $teacher->name }}</div>
+                            <small class="text-muted d-block" style="font-size: 11px;">معلم</small>
+                        </div>
+                        <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 12px;"></i>
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown">
+                        <li>
+                            <div class="px-3 py-2">
+                                <div class="fw-bold text-dark fs-6">{{ $teacher->name }}</div>
+                                <small class="text-muted">{{ $teacher->email }}</small>
+                            </div>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('teacher.profile') }}">
+                                <i class="bi bi-person-circle me-2 text-primary"></i> الملف الشخصي
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{{ route('teacher.profile.edit') }}">
+                                <i class="bi bi-pencil-square me-2 text-warning"></i> تعديل البيانات
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteTeacherModal">
+                                <i class="bi bi-trash me-2"></i> حذف الحساب
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Logout -->
+                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="logout-btn">
+                        <i class="bi bi-box-arrow-right me-1"></i> تسجيل الخروج
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-container">
+
+        <!-- Page Header -->
+        <div class="page-title">
+            <h2>صفوف المعلم</h2>
+            <p>عرض الأطفال المرتبطين بك ضمن الصفوف الدراسية.</p>
+        </div>
+
+        <!-- Search Filter Form -->
+        <div class="filter-box">
+            <form action="{{ route('teacher.classes') }}" method="GET" class="row g-3 align-items-end">
+
+                <!-- البحث باسم الطالب -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-secondary">اسم الطالب</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search_name" class="form-control" placeholder="ابحث باسم الطالب..." value="{{ request('search_name') }}">
+                    </div>
+                </div>
+
+                <!-- قائمة منسدلة لأسماء الصفوف الموجودة -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-secondary">الصف الدراسي</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-mortarboard"></i></span>
+                        <select name="search_class" class="form-select">
+                            <option value="">-- كل الصفوف --</option>
+                            @foreach($availableClasses as $classNameOption)
+                            <option value="{{ $classNameOption }}" {{ request('search_class') == $classNameOption ? 'selected' : '' }}>
+                                {{ $classNameOption }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- البحث بالتاريخ -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-secondary">تاريخ التقرير اليومي</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-calendar-date"></i></span>
+                        <input type="date" name="search_date" class="form-control" value="{{ request('search_date') }}" lang="en" style="direction: ltr; text-align: right;">
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter me-1"></i> بحث
+                    </button>
+                    <a href="{{ route('teacher.classes') }}" class="btn btn-outline-secondary" title="إعادة تعيين">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        @if($classes->isEmpty())
+        <!-- No Students -->
+        <div class="alert alert-info text-center py-4">
+            <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+            لا توجد نتائج تطابق بحثك أو لا يوجد طلاب مرتبطون بك حالياً.
+        </div>
+        @else
+
+        @foreach($classes as $className => $children)
+
+        <!-- Class Card -->
+        <div class="card class-card shadow-sm mb-4">
+
+            <!-- Class Header -->
+            <div class="class-header">
+                <h4>
+                    <i class="bi bi-mortarboard me-1"></i>الصف: {{ $className }}
+                </h4>
+
+                <!-- أزرار الانتقال إلى صفحات مستقلة لعرض العلامات والملاحظات مع دعم تمرير البحث -->
+                <div class="d-flex gap-2">
+                    <a href="{{ route('teacher.classes.grades', ['class' => $className, 'search_name' => request('search_name'), 'search_date' => request('search_date')]) }}" class="btn btn-light btn-sm fw-bold text-primary px-3 text-decoration-none">
+                        <i class="bi bi-award me-1"></i> عرض العلامات
+                    </a>
+                    <a href="{{ route('teacher.classes.notes', ['class' => $className, 'search_name' => request('search_name'), 'search_date' => request('search_date')]) }}" class="btn btn-light btn-sm fw-bold text-dark px-3 text-decoration-none">
+                        <i class="bi bi-journal-text me-1"></i> عرض الملاحظات
+                    </a>
+                </div>
+            </div>
+
+            <!-- Class Body (جدول الأطفال) -->
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>اسم الطالب</th>
+                                <th>الجنس</th>
+                                <th>العمر</th>
+                                <th>الحالة الصحية</th>
+                                <th>المعدل العام للطالب</th>
+                                <th>المتغيرات اليومية</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach($children as $index => $child)
+
+                            <!-- معلومات الطفل -->
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>
+                                    <strong>{{ $child->name }}</strong>
+                                </td>
+                                <td>
+                                    @if($child->gender == 'male')
+                                    ذكر
+                                    @elseif($child->gender == 'female')
+                                    أنثى
+                                    @else
+                                    -
+                                    @endif
+                                </td>
+                                <td>{{ $child->age ?? '-' }}</td>
+                                <td>{{ $child->Health_status ?? '-' }}</td>
+
+                                <!-- المعدل العام لكل طالب -->
+                                <td>
+                                    @php
+                                    $studentResults = $child->dailyVariables->pluck('result')->filter(fn($val) => is_numeric($val));
+                                    $studentAverage = $studentResults->count() > 0 ? round($studentResults->average(), 1) : null;
+                                    @endphp
+
+                                    @if($studentAverage !== null)
+                                    <span class="badge bg-success fs-6 px-3 py-1">
+                                        {{ $studentAverage }}
+                                    </span>
+                                    @else
+                                    <span class="text-muted small">لا توجد علامات</span>
+                                    @endif
+                                </td>
+
+                                <td>
+                                    @if($child->dailyVariables->count() > 0)
+                                    <button class="btn btn-info btn-sm text-white" type="button" data-bs-toggle="collapse" data-bs-target="#daily{{ $child->id }}">
+                                        <i class="bi bi-eye me-1"></i> عرض البيانات ({{ $child->dailyVariables->count() }})
+                                    </button>
+                                    @else
+                                    <span class="text-muted">لا توجد بيانات</span>
+                                    @endif
+                                </td>
+                            </tr>
+
+                            <!-- Daily Variables -->
+                            @if($child->dailyVariables->count() > 0)
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    <div class="collapse {{ request('search_date') ? 'show' : '' }}" id="daily{{ $child->id }}">
+                                        <div class="daily-box">
+                                            <h5 class="mb-3">
+                                                البيانات اليومية للطفل: <strong>{{ $child->name }}</strong>
+                                            </h5>
+
+                                            <table class="table table-sm table-bordered bg-white mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>التاريخ</th>
+                                                        <th>الموضوع</th>
+                                                        <th>النتيجة</th>
+                                                        <th>الملاحظات</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($child->dailyVariables as $daily)
+                                                    <tr>
+                                                        <td>{{ \Carbon\Carbon::parse($daily->report_date)->format('Y-m-d H:i') }}</td>
+                                                        <td>{{ $daily->topic ?? '-' }}</td>
+                                                        <td>{{ $daily->result ?? '-' }}</td>
+                                                        <td>{{ $daily->notes ?? '-' }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endif
+
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        @endforeach
+
+        @endif
+
+    </main>
+
+    <!-- Modal تحذير حذف الحساب -->
+    <div class="modal fade" id="deleteTeacherModal" tabindex="-1" aria-labelledby="deleteTeacherModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fs-6" id="deleteTeacherModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> تحذير: حذف الحساب
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-trash3-fill text-danger display-4 mb-3 d-block"></i>
+                    <h6 class="fw-bold text-dark mb-2">هل أنت متأكد من حذف حسابك؟</h6>
+                    <p class="text-muted small mb-0">
+                        سيتم حذف حساب المعلم نهائياً ولا يمكن التراجع عن هذه العملية.
+                    </p>
+                </div>
+                <div class="modal-footer bg-light justify-content-center border-0">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
+
+                    <form action="{{ route('teacher.profile.delete') }}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-trash3 me-1"></i> نعم، احذف الحساب
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
