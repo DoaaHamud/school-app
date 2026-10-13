@@ -151,92 +151,186 @@
             margin-bottom: 20px;
         }
 
+        .children-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+        }
+
         .child-card {
+            position: relative;
             background: white;
-            border: 1px solid #e5eaf0;
-            border-radius: 15px;
-            padding: 22px;
+            border: 1px solid #e8edf3;
+            border-radius: 20px;
+            padding: 24px;
+            height: 100%;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .child-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 5px;
+            background: var(--school-color, #2563eb);
+        }
+
+        .child-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.09);
+        }
+
+        .school-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 18px;
             margin-bottom: 20px;
-            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+            border-bottom: 1px solid #f0f2f5;
         }
 
         .child-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 20px;
+            gap: 24px;
         }
 
         .child-info {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 18px;
+            min-width: 0;
         }
 
         .child-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 14px;
-            background: #eef4ff;
-            color: #2563eb;
+            width: 76px;
+            height: 76px;
+            flex: 0 0 76px;
+            border: 3px solid color-mix(in srgb, var(--school-color, #2563eb) 18%, white);
+            border-radius: 22px;
+            background: color-mix(in srgb, var(--school-color, #2563eb) 10%, white);
+            color: var(--school-color, #2563eb);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 32px;
+            overflow: hidden;
         }
 
         .child-name {
-            font-size: 19px;
+            font-size: 21px;
             font-weight: 700;
             color: #1f2937;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .child-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 8px;
             color: #6b7280;
-            font-size: 13px;
+            font-size: 12px;
+        }
+
+        .child-meta span {
+            padding: 7px 10px;
+            border: 1px solid #edf0f4;
+            border-radius: 9px;
+            background: #fafbfc;
         }
 
         .child-meta i {
-            color: #2563eb;
+            color: var(--school-color, #2563eb);
             margin-left: 4px;
         }
 
+        .school-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--school-color, #2563eb);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .school-brand img,
+        .school-brand-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid color-mix(in srgb, var(--school-color, #2563eb) 16%, white);
+            border-radius: 10px;
+            object-fit: contain;
+            background: #fff;
+        }
+
+        .school-brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: color-mix(in srgb, var(--school-color, #2563eb) 10%, white);
+            font-size: 17px;
+        }
+
+        .school-caption {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
         .details-btn {
-            background: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            flex: 0 0 auto;
+            background: var(--school-color, #2563eb);
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 10px 17px;
+            border-radius: 11px;
+            padding: 11px 17px;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 10px color-mix(in srgb, var(--school-color, #2563eb) 22%, transparent);
+            transition: filter 0.2s ease, transform 0.2s ease;
         }
 
         .details-btn:hover {
-            background: #1d4ed8;
+            filter: brightness(0.9);
             color: white;
+            transform: translateY(-1px);
         }
 
         .latest-report {
-            margin-top: 20px;
+            margin-top: 22px;
             padding-top: 18px;
-            border-top: 1px solid #edf0f4;
+            border-top: 1px solid #f0f2f5;
         }
 
         .latest-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 700;
             font-size: 14px;
             color: #374151;
             margin-bottom: 10px;
         }
 
+        .latest-title i {
+            color: var(--school-color, #2563eb);
+        }
+
         .report-box {
-            background: #f8faff;
-            border-radius: 10px;
-            padding: 14px;
+            background: color-mix(in srgb, var(--school-color, #2563eb) 5%, white);
+            border: 1px solid color-mix(in srgb, var(--school-color, #2563eb) 12%, white);
+            border-radius: 13px;
+            padding: 16px;
         }
 
         .report-topic {
@@ -251,15 +345,17 @@
         }
 
         .result-badge {
-            background: #eef4ff;
-            color: #2563eb;
-            border-radius: 20px;
-            padding: 6px 12px;
+            white-space: nowrap;
+            background: color-mix(in srgb, var(--school-color, #2563eb) 10%, white);
+            color: var(--school-color, #2563eb);
+            border-radius: 9px;
+            padding: 8px 12px;
             font-size: 12px;
             font-weight: 600;
         }
 
         .empty-box {
+            grid-column: 1 / -1;
             background: white;
             border: 1px solid #e5eaf0;
             border-radius: 15px;
@@ -286,14 +382,50 @@
                 padding: 30px 15px;
             }
 
+            .children-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .child-card {
+                padding: 19px;
+            }
+
             .child-header {
                 flex-direction: column;
                 align-items: stretch;
             }
 
+            .child-info {
+                align-items: flex-start;
+            }
+
+            .child-avatar {
+                width: 62px;
+                height: 62px;
+                flex-basis: 62px;
+                border-radius: 18px;
+            }
+
+            .child-name {
+                font-size: 18px;
+            }
+
             .details-btn {
                 display: block;
                 text-align: center;
+            }
+
+            .school-card-header {
+                align-items: flex-start;
+            }
+
+            .report-box .d-flex {
+                flex-direction: column;
+            }
+
+            .result-badge {
+                align-self: flex-start;
             }
         }
     </style>
@@ -402,13 +534,31 @@
             أطفالي
         </h3>
 
+        <div class="children-grid">
         @forelse($children as $child)
-        <div class="child-card">
+        @php
+            $schoolColor = $child->manager?->primary_color;
+            if (!is_string($schoolColor) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $schoolColor)) {
+                $schoolColor = '#2563eb';
+            }
+        @endphp
+        <div class="child-card" style="--school-color: {{ $schoolColor }};">
+            <div class="school-card-header">
+                <div class="school-brand mb-0">
+                    @if($child->manager?->school_logo)
+                    <img src="{{ asset('storage/' . $child->manager->school_logo) }}" alt="شعار {{ $child->manager->school_name ?? 'المدرسة' }}">
+                    @else
+                    <span class="school-brand-icon"><i class="bi bi-mortarboard"></i></span>
+                    @endif
+                    <span>{{ $child->manager?->school_name ?? 'المدرسة غير محددة' }}</span>
+                </div>
+                <span class="school-caption">بيانات المدرسة</span>
+            </div>
             <div class="child-header">
                 <div class="child-info">
                     <div class="child-avatar">
                         @if($child->image)
-                        <img src="{{ asset('images/children/' . $child->image) }}" alt="{{ $child->name }}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;">
+                        <img src="{{ asset('images/children/' . $child->image) }}" alt="{{ $child->name }}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
                         @else
                         <i class="bi bi-person"></i>
                         @endif
@@ -440,6 +590,7 @@
                 <a href="{{ route('mother.child_details', $child->id) }}" class="details-btn">
                     <i class="bi bi-eye"></i>
                     عرض التفاصيل
+                    <i class="bi bi-arrow-left-short"></i>
                 </a>
             </div>
 
@@ -497,6 +648,7 @@
             </p>
         </div>
         @endforelse
+        </div>
     </main>
 
     <!-- نافذة تأكيد حذف حساب الأم (Modal) -->

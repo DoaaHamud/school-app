@@ -1,20 +1,7 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الملف الشخصي - روضتي</title>
-    <!-- Bootstrap 5 RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+@section('content')
     <style>
-        body {
-            background-color: #f6f8fb;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-        }
-
         .main-container {
             max-width: 900px;
             margin: 40px auto;
@@ -32,17 +19,25 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: #eff6ff;
-            color: #2563eb;
+            background: color-mix(in srgb, var(--primary-color) 10%, white);
+            color: var(--primary-color);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 36px;
         }
-    </style>
-</head>
 
-<body>
+        .profile-role-badge {
+            background: color-mix(in srgb, var(--primary-color) 10%, white);
+            color: var(--primary-color);
+            border-color: color-mix(in srgb, var(--primary-color) 25%, white) !important;
+        }
+
+        .profile-title {
+            color: var(--primary-color);
+        }
+    </style>
+
     <div class="container main-container">
 
         @if(session('success'))
@@ -53,7 +48,7 @@
         @endif
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold mb-0">الملف الشخصي</h3>
+            <h3 class="fw-bold mb-0 profile-title">الملف الشخصي</h3>
             <a href="{{ route('teacher.dashboard') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-right me-1"></i> العودة للرئيسية
             </a>
@@ -66,7 +61,7 @@
                 </div>
                 <div>
                     <h4 class="fw-bold mb-1">{{ $teacher->name }}</h4>
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">معلم</span>
+                    <span class="badge border px-3 py-2 profile-role-badge">معلم</span>
                 </div>
             </div>
 
@@ -96,6 +91,5 @@
             </div>
         </div>
     </div>
-</body>
 
-</html>
+@endsection

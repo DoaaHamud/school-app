@@ -1,20 +1,7 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تعديل بيانات المعلم - روضتي</title>
-    <!-- Bootstrap 5 RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+@section('content')
     <style>
-        body {
-            background-color: #f6f8fb;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-        }
-
         .main-container {
             max-width: 800px;
             margin: 40px auto;
@@ -27,20 +14,22 @@
             border-radius: 12px;
             padding: 30px;
         }
-    </style>
-</head>
 
-<body>
+        .profile-edit-title,
+        .profile-edit-card label {
+            color: var(--primary-color);
+        }
+    </style>
     <div class="container main-container">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold mb-0">تعديل البيانات الشخصية</h3>
+            <h3 class="fw-bold mb-0 profile-edit-title">تعديل البيانات الشخصية</h3>
             <a href="{{ route('teacher.profile') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-right me-1"></i> إلغاء ورجوع
             </a>
         </div>
 
-        <div class="edit-card shadow-sm">
+        <div class="edit-card profile-edit-card shadow-sm">
             <form action="{{ route('teacher.profile.update') }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -70,7 +59,7 @@
                 </div>
 
                 <div class="d-flex gap-2 border-top pt-3">
-                    <button type="submit" class="btn btn-primary px-4">
+                    <button type="submit" class="btn btn-primary-custom px-4">
                         <i class="bi bi-check2-circle me-1"></i> حفظ التغييرات
                     </button>
                     <a href="{{ route('teacher.profile') }}" class="btn btn-light px-4">إلغاء</a>
@@ -78,6 +67,5 @@
             </form>
         </div>
     </div>
-</body>
 
-</html>
+@endsection

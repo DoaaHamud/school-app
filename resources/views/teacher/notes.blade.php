@@ -1,21 +1,7 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض الملاحظات - {{ $className }}</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+@section('content')
     <style>
-        body {
-            background-color: #f5f6fa;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-            color: #273142;
-        }
-
         .main-container {
             max-width: 1200px;
             margin: auto;
@@ -30,9 +16,19 @@
         }
 
         .card-header-custom {
-            background-color: #1f2937;
+            background-color: var(--primary-color);
             color: #fff;
             padding: 20px 25px;
+        }
+
+        .main-container .text-primary {
+            color: var(--primary-color) !important;
+        }
+
+        .main-container .btn-primary,
+        .main-container .badge.bg-primary {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
         }
 
         table {
@@ -50,15 +46,11 @@
             text-align: right;
         }
     </style>
-</head>
-
-<body>
-
     <div class="main-container">
 
         <!-- أزرار الرجوع والعنوان -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <h4 class="fw-bold m-0 text-dark">سجل ملاحظات صف: {{ $className }}</h4>
+            <h4 class="fw-bold m-0 text-primary">سجل ملاحظات صف: {{ $className }}</h4>
             <a href="{{ route('teacher.classes') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-right me-1"></i> العودة للصفوف
             </a>
@@ -80,7 +72,7 @@
                     <input type="date" name="search_date" class="form-control" value="{{ request('search_date') }}">
                 </div>
                 <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-dark w-100"><i class="bi bi-search"></i> بحث</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> بحث</button>
                     <a href="{{ route('teacher.classes.notes', ['class' => $className]) }}" class="btn btn-outline-secondary" title="إعادة تعيين"><i class="bi bi-arrow-counterclockwise"></i></a>
                 </div>
             </form>
@@ -133,6 +125,4 @@
 
     </div>
 
-</body>
-
-</html>
+@endsection

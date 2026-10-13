@@ -1,21 +1,7 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض العلامات - {{ $className }}</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+@section('content')
     <style>
-        body {
-            background-color: #f5f6fa;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-            color: #273142;
-        }
-
         .main-container {
             max-width: 1200px;
             margin: auto;
@@ -30,9 +16,19 @@
         }
 
         .card-header-custom {
-            background-color: #2563eb;
+            background-color: var(--primary-color);
             color: #fff;
             padding: 20px 25px;
+        }
+
+        .main-container .text-primary {
+            color: var(--primary-color) !important;
+        }
+
+        .main-container .btn-primary,
+        .main-container .badge.bg-primary {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
         }
 
         table {
@@ -40,10 +36,6 @@
             vertical-align: middle;
         }
     </style>
-</head>
-
-<body>
-
     <div class="main-container">
 
         <!-- أزرار الرجوع والعنوان -->
@@ -123,6 +115,4 @@
 
     </div>
 
-</body>
-
-</html>
+@endsection

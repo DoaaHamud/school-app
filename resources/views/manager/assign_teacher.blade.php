@@ -1,22 +1,8 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>توزيع الطلاب - {{ $teacher->name }}</title>
-
-    {{-- Bootstrap --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    {{-- Bootstrap Icons --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@section('content')
 
     <style>
-        body {
-            background: #f8fafc;
-            font-family: Arial, sans-serif;
-        }
-
         .navbar-custom {
             background: #ffffff;
             border-bottom: 1px solid #e5e7eb;
@@ -30,8 +16,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
+            background: var(--primary-color);
+            color: #ffffff;
             font-size: 20px;
         }
 
@@ -62,8 +48,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #eef2ff;
-            color: #4f46e5;
+            background: var(--primary-color);
+            color: #ffffff;
             font-size: 25px;
         }
 
@@ -81,14 +67,14 @@
         }
 
         .student-card:hover {
-            border-color: #6366f1;
+            border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
         }
 
         .student-card.selected {
-            border-color: #6366f1;
-            background: #f5f3ff;
+            border-color: var(--primary-color);
+            background: color-mix(in srgb, var(--primary-color) 10%, white);
         }
 
         .student-checkbox {
@@ -108,13 +94,13 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background: #eef2ff;
-            color: #4f46e5;
+            background: var(--primary-color);
+            color: #ffffff;
             font-size: 20px;
         }
 
         .check-icon {
-            color: #6366f1;
+            color: var(--primary-color);
             font-size: 20px;
             opacity: 0;
         }
@@ -128,18 +114,16 @@
         }
 
         .btn-primary {
-            background: #6366f1;
-            border-color: #6366f1;
+            background: var(--primary-color);
+            border-color: var(--primary-color);
         }
 
         .btn-primary:hover {
-            background: #4f46e5;
-            border-color: #4f46e5;
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            opacity: 0.9;
         }
     </style>
-</head>
-
-<body>
 
     {{-- Navbar --}}
     <nav class="navbar navbar-custom">
@@ -149,7 +133,7 @@
                     <i class="bi bi-balloon-heart-fill"></i>
                 </div>
                 <div>
-                    <div class="brand-title">روضتي</div>
+                    <div class="brand-title">{{ auth()->user()->school_name ?? 'روضتي' }}</div>
                     <div class="brand-subtitle">لوحة تحكم المدير</div>
                 </div>
             </div>
@@ -346,6 +330,4 @@
         });
     </script>
 
-</body>
-
-</html>
+@endsection

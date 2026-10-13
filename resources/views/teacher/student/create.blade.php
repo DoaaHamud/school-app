@@ -1,26 +1,10 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إضافة طفل جديد - روضتي</title>
-
-    <!-- Bootstrap RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@section('content')
 
     <style>
         * {
             box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            background-color: #f6f8fb;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-            color: #273142;
         }
 
         /* =========================
@@ -28,10 +12,10 @@
         ========================= */
 
         .navbar-custom {
-            background-color: #ffffff;
+            background-color: var(--primary-color);
             min-height: 70px;
             padding: 0 35px;
-            border-bottom: 1px solid #e8ebef;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .navbar-brand {
@@ -47,7 +31,7 @@
         }
 
         .nav-link {
-            color: #4b5563;
+            color: rgba(255, 255, 255, 0.85);
             font-size: 15px;
             font-weight: 500;
             padding: 24px 15px !important;
@@ -56,11 +40,12 @@
 
         .nav-link:hover,
         .nav-link.active {
-            color: #2563eb;
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.16);
         }
 
         .nav-link.active {
-            border-bottom: 2px solid #2563eb;
+            border-bottom: 2px solid #ffffff;
         }
 
         /* تنسيق زر وقائمة اسم المعلم */
@@ -77,15 +62,15 @@
         }
 
         .teacher-profile-btn:hover {
-            background-color: #f1f5f9;
+            background-color: rgba(255, 255, 255, 0.16);
         }
 
         .teacher-avatar {
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            background-color: #eff6ff;
-            color: #2563eb;
+            background-color: #ffffff;
+            color: var(--primary-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -99,6 +84,30 @@
             border-radius: 12px;
             padding: 8px;
             box-shadow: 0 8px 25px rgba(15, 23, 42, 0.10);
+        }
+
+        .teacher-dropdown .dropdown-header {
+            background-color: var(--primary-color);
+            border-radius: 0.375rem;
+            color: #ffffff;
+        }
+
+        .teacher-dropdown .dropdown-header strong,
+        .teacher-dropdown .dropdown-header small {
+            color: #ffffff !important;
+        }
+
+        .teacher-dropdown .dropdown-item:not(.text-danger):hover,
+        .teacher-dropdown .dropdown-item:not(.text-danger):focus,
+        .teacher-dropdown .dropdown-item:not(.text-danger):active {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .teacher-dropdown .dropdown-item:not(.text-danger):hover i,
+        .teacher-dropdown .dropdown-item:not(.text-danger):focus i,
+        .teacher-dropdown .dropdown-item:not(.text-danger):active i {
+            color: #ffffff !important;
         }
 
         .logout-btn {
@@ -138,8 +147,8 @@
         }
 
         .card-header-custom {
-            background-color: #2563eb;
-            color: white;
+            background-color: var(--primary-color);
+            color: #ffffff;
             padding: 18px 25px;
             font-size: 18px;
             font-weight: 700;
@@ -168,8 +177,8 @@
 
         .form-control:focus,
         .form-select:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.1);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15);
         }
 
         textarea.form-control {
@@ -177,17 +186,23 @@
         }
 
         .save-btn {
-            background-color: #2563eb;
-            border: none;
-            color: white;
+            background-color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            color: #ffffff;
             border-radius: 7px;
             padding: 10px 22px;
             cursor: pointer;
         }
 
         .save-btn:hover {
-            background-color: #1d4ed8;
-            color: white;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+            opacity: 0.9;
+        }
+
+        .card-header-custom {
+            background-color: var(--primary-color);
         }
 
         .cancel-btn {
@@ -226,26 +241,22 @@
             }
         }
     </style>
-</head>
-
-<body>
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
             <!-- حاوية الشعار -->
-            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
-                <img src="{{ asset('images/logo.jpeg') }}"
-                    alt="شعار روضتي"
+            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ $schoolBranding->school_logo ? asset('storage/' . $schoolBranding->school_logo) : asset('images/logo.jpeg') }}"
+                    alt="شعار {{ $schoolBranding->school_name ?? 'روضتي' }}"
                     style="width: 100%; height: 100%; object-fit: contain;">
             </div>
 
             <!-- النصوص بجانب الشعار -->
             <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-                <span style="font-size: 18px; font-weight: 800; color: #2563eb; line-height: 1.2;">روضتي</span>
-                <span style="font-size: 12px; color: #64748b; margin-top: 2px; font-weight: 500;">لوحة تحكم المعلمة</span>
+                <span style="font-size: 18px; font-weight: 800; color: #ffffff; line-height: 1.2;">{{ $schoolBranding->school_name ?? 'روضتي' }}</span>
+                <span style="font-size: 12px; color: rgba(255, 255, 255, 0.85); margin-top: 2px; font-weight: 500;">لوحة تحكم المعلم</span>
             </div>
-            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#teacherNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -279,11 +290,11 @@
                         <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 12px;"></i>
                     </button>
 
-                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown">
+                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown manager-account-menu">
                         <li>
-                            <div class="px-3 py-2">
-                                <div class="fw-bold text-dark fs-6">{{ $teacher->name }}</div>
-                                <small class="text-muted">{{ $teacher->email }}</small>
+                            <div class="dropdown-header px-3 py-2">
+                                <div class="fw-bold text-white fs-6">{{ $teacher->name }}</div>
+                                <small class="text-white">{{ $teacher->email }}</small>
                             </div>
                         </li>
                         <li>
@@ -291,7 +302,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('teacher.profile') }}">
-                                <i class="bi bi-person-circle me-2 text-primary"></i> الملف الشخصي
+                                <i class="bi bi-person-circle me-2"></i> الملف الشخصي
                             </a>
                         </li>
                         <li>
@@ -456,9 +467,4 @@
         </div>
     </div>
 
-    <!-- Bootstrap JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-
-</html>
+@endsection

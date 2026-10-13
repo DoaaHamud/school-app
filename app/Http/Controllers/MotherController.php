@@ -12,9 +12,12 @@ class MotherController extends Controller
 
         // جلب أطفال الأم مع ملاحظاتهم، من الأحدث إلى الأقدم
         $children = chaldrin::where('mother_id', $mother->id)
-            ->with(['dailyVariables' => function ($query) {
-                $query->latest();
-            }])
+            ->with([
+                'manager:id,school_name,school_logo,primary_color',
+                'dailyVariables' => function ($query) {
+                    $query->latest();
+                },
+            ])
             ->get();
 
         return view('mother.dashboard', compact('mother', 'children'));
@@ -30,9 +33,12 @@ class MotherController extends Controller
         // التأكد أن الطفل تابع للأم الحالية
         $child = chaldrin::where('id', $id)
             ->where('mother_id', $mother->id)
-            ->with(['dailyVariables' => function ($query) {
-                $query->latest();
-            }])
+            ->with([
+                'manager:id,school_name,school_logo,primary_color',
+                'dailyVariables' => function ($query) {
+                    $query->latest();
+                },
+            ])
             ->firstOrFail();
 
         return view('mother.child_details', compact('child'));

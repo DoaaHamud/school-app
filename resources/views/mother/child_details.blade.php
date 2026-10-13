@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>تفاصيل الطفل - روضتي</title>
+    <title>تفاصيل {{ $child->name }} - {{ $child->manager?->school_name ?? 'روضتي' }}</title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
@@ -27,6 +27,7 @@
             background: #f5f7fb;
             font-family: "Segoe UI", Tahoma, Arial, sans-serif;
             color: #273142;
+            --school-color: #2563eb;
         }
 
         /* Navbar */
@@ -35,19 +36,41 @@
             background: #ffffff;
             min-height: 70px;
             padding: 0 35px;
-            border-bottom: 1px solid #e7ebf0;
+            border-bottom: 3px solid var(--school-color);
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
         }
 
-        .navbar-brand {
-            font-size: 22px;
+        .school-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--school-color);
             font-weight: 700;
-            color: #1f2937;
-            margin-left: 30px;
+            text-decoration: none;
         }
 
-        .navbar-brand:hover {
-            color: #1f2937;
+        .school-logo {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            padding: 4px;
+            border: 1px solid color-mix(in srgb, var(--school-color) 20%, white);
+            border-radius: 12px;
+            object-fit: contain;
+            background: #fff;
+        }
+
+        .school-brand-name {
+            font-size: 16px;
+            line-height: 1.25;
+        }
+
+        .school-brand-caption {
+            display: block;
+            margin-top: 3px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
         }
 
         .nav-link {
@@ -59,13 +82,49 @@
 
         .nav-link:hover,
         .nav-link.active {
-            color: #2563eb;
+            color: var(--school-color);
         }
 
-        .mother-name {
-            color: #4b5563;
-            font-size: 14px;
-            margin-left: 20px;
+        .mother-account {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 16px;
+            padding: 6px 12px 6px 14px;
+            border: 1px solid #e8edf3;
+            border-radius: 14px;
+            background: #f8fafc;
+        }
+
+        .mother-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+            border-radius: 11px;
+            background: color-mix(in srgb, var(--school-color) 11%, white);
+            color: var(--school-color);
+            font-size: 17px;
+        }
+
+        .mother-account-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.35;
+        }
+
+        .mother-account-name {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .mother-account-role {
+            color: #94a3b8;
+            font-size: 10px;
+            margin-top: 2px;
         }
 
         .logout-btn {
@@ -94,14 +153,14 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            color: #2563eb;
+            color: var(--school-color);
             text-decoration: none;
             font-size: 14px;
             margin-bottom: 25px;
         }
 
         .back-link:hover {
-            color: #1d4ed8;
+            filter: brightness(0.85);
         }
 
         /* Child information */
@@ -109,6 +168,7 @@
         .child-card {
             background: #ffffff;
             border: 1px solid #e5eaf0;
+            border-top: 4px solid var(--school-color);
             border-radius: 15px;
             padding: 28px;
             box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
@@ -126,8 +186,8 @@
             width: 90px;
             height: 90px;
             border-radius: 16px;
-            background: #eef4ff;
-            color: #2563eb;
+            background: color-mix(in srgb, var(--school-color) 10%, white);
+            color: var(--school-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -163,8 +223,8 @@
         }
 
         .info-box {
-            background: #f8faff;
-            border: 1px solid #edf1f7;
+            background: color-mix(in srgb, var(--school-color) 4%, white);
+            border: 1px solid color-mix(in srgb, var(--school-color) 12%, white);
             border-radius: 10px;
             padding: 15px;
         }
@@ -182,7 +242,7 @@
         }
 
         .info-value i {
-            color: #2563eb;
+            color: var(--school-color);
             margin-left: 5px;
         }
 
@@ -196,13 +256,14 @@
         }
 
         .section-title i {
-            color: #2563eb;
+            color: var(--school-color);
             margin-left: 7px;
         }
 
         .report-card {
             background: #ffffff;
-            border: 1px solid #e5eaf0;
+            border: 1px solid color-mix(in srgb, var(--school-color) 16%, white);
+            border-right: 4px solid var(--school-color);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
@@ -224,13 +285,13 @@
         }
 
         .report-topic i {
-            color: #2563eb;
+            color: var(--school-color);
             margin-left: 5px;
         }
 
         .result-badge {
-            background: #eef4ff;
-            color: #2563eb;
+            background: color-mix(in srgb, var(--school-color) 10%, white);
+            color: var(--school-color);
             border-radius: 20px;
             padding: 7px 13px;
             font-size: 12px;
@@ -245,7 +306,7 @@
         }
 
         .report-notes {
-            background: #f8f9fb;
+            background: color-mix(in srgb, var(--school-color) 4%, white);
             border-radius: 8px;
             padding: 12px 14px;
             color: #4b5563;
@@ -313,7 +374,13 @@
 
 </head>
 
-<body>
+@php
+    $schoolColor = $child->manager?->primary_color;
+    if (!is_string($schoolColor) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $schoolColor)) {
+        $schoolColor = '#2563eb';
+    }
+@endphp
+<body style="--school-color: {{ $schoolColor }};">
 
     <!-- Navbar -->
 
@@ -321,18 +388,15 @@
 
         <div class="container-fluid">
             <!-- حاوية الشعار -->
-            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
-                <img src="{{ asset('images/logo.jpeg') }}"
-                    alt="شعار روضتي"
-                    style="width: 100%; height: 100%; object-fit: contain;">
+            <div class="school-brand">
+                <img class="school-logo"
+                    src="{{ $child->manager?->school_logo ? asset('storage/' . $child->manager->school_logo) : asset('images/logo.jpeg') }}"
+                    alt="شعار {{ $child->manager?->school_name ?? 'روضتي' }}">
+                <span class="school-brand-name">
+                    {{ $child->manager?->school_name ?? 'روضتي' }}
+                    <small class="school-brand-caption">تقارير الطفل</small>
+                </span>
             </div>
-
-            <!-- النصوص بجانب الشعار -->
-            <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-                <span style="font-size: 18px; font-weight: 800; color: #2563eb; line-height: 1.2;">روضتي</span>
-                <span style="font-size: 12px; color: #64748b; margin-top: 2px; font-weight: 500;">لوحة الأم</span>
-            </div>
-            </a>
 
             <button
                 class="navbar-toggler"
@@ -364,13 +428,15 @@
 
                 </ul>
 
-                <span class="mother-name">
-
-                    <i class="bi bi-person-circle"></i>
-
-                    {{ auth()->user()->name }}
-
-                </span>
+                <div class="mother-account">
+                    <span class="mother-avatar" aria-hidden="true">
+                        <i class="bi bi-person-fill"></i>
+                    </span>
+                    <span class="mother-account-info">
+                        <span class="mother-account-name">{{ auth()->user()->name }}</span>
+                        <span class="mother-account-role">وليّة أمر</span>
+                    </span>
+                </div>
 
                 <form
                     action="{{ route('logout') }}"

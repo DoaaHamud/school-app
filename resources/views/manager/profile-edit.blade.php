@@ -1,26 +1,8 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>تعديل البيانات - روضتي</title>
-
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@section('content')
 
     <style>
-        body {
-            background: #f8fafc;
-            font-family: Arial, sans-serif;
-        }
-
         .page-wrapper {
             max-width: 850px;
             margin: 50px auto;
@@ -63,21 +45,23 @@
         }
 
         .form-control:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15);
         }
 
         .btn-save {
-            background: #4f46e5;
-            color: white;
-            border: none;
+            background: var(--primary-color);
+            color: #ffffff;
+            border: 1px solid var(--primary-color);
             border-radius: 10px;
             padding: 11px 25px;
         }
 
         .btn-save:hover {
-            background: #4338ca;
-            color: white;
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+            opacity: 0.9;
         }
 
         .btn-back {
@@ -89,9 +73,6 @@
             color: #dc2626;
         }
     </style>
-</head>
-
-<body>
 
     <div class="page-wrapper">
 
@@ -197,6 +178,4 @@
 
     </div>
 
-</body>
-
-</html>
+@endsection

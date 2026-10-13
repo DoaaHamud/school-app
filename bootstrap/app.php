@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,13 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // استثناء الخروج فقط حتى لا يمنع انتهاء رمز CSRF إنهاء الجلسة.
+        $middleware->validateCsrfTokens(except: ['logout']);
 
         // حل مشكلة التوجيه لمنع حلقة التكرار ERR_TOO_MANY_REDIRECTS
         $middleware->redirectTo(
             guests: '/login',
             users: function () {
-                if (auth()->check()) {
-                    return match (auth()->user()->role) {
+                if (Auth::check()) {
+                    return match (Auth::user()->role) {
                         'admin'   => route('admin.dashboard'),
                         'manager' => route('manager.dashboard'),
                         'teacher' => route('teacher.dashboard'),

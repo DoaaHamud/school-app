@@ -1,23 +1,8 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ملف الطالب - {{ $student->name }} - روضتي</title>
-
-    {{-- Bootstrap RTL --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    {{-- Bootstrap Icons --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@section('content')
 
     <style>
-        body {
-            background-color: #f8fafc;
-            font-family: Arial, sans-serif;
-            color: #1f2937;
-        }
-
         .card {
             border-radius: 14px;
             border: 1px solid #e5e7eb;
@@ -27,8 +12,8 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: #eff6ff;
-            color: #2563eb;
+            background: var(--primary-color);
+            color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -48,16 +33,7 @@
             vertical-align: middle;
         }
 
-        .badge-custom {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 12px;
-        }
     </style>
-</head>
-
-<body>
 
     <div class="container py-5">
 
@@ -100,7 +76,7 @@
         {{-- جدول المتغيرات اليومية بكامل التفاصيل --}}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-journal-text me-1 text-primary"></i> سجل المتغيرات والتقييمات اليومية</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-journal-text me-1" style="color: var(--primary-color);"></i> سجل المتغيرات والتقييمات اليومية</h5>
             </div>
 
             <div class="card-body p-0">
@@ -125,7 +101,7 @@
                                     {{ $daily->created_at?->format('Y-m-d') ?? '-' }}
                                 </td>
                                 <td>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                    <span class="badge px-3 py-2" style="background-color: var(--primary-color); color: #ffffff;">
                                         {{ $daily->result ?? '-' }}
                                     </span>
                                 </td>
@@ -158,9 +134,4 @@
 
     </div>
 
-    {{-- Bootstrap JS --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-
-</html>
+@endsection

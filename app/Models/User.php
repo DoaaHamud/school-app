@@ -28,6 +28,8 @@ class User extends Authenticatable
         'role',
         'status',
         'phone',
+        'school_logo',
+        'primary_color',
     ];
 
     /**

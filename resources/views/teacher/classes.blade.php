@@ -1,50 +1,34 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفوف المعلم - روضتي</title>
-
-    <!-- Bootstrap RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@section('content')
 
     <style>
         * {
             box-sizing: border-box;
         }
 
-        body {
-            margin: 0;
-            background-color: #f5f6fa;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-            color: #273142;
-        }
-
         /* Navbar */
         .navbar-custom {
-            background-color: #ffffff;
+            background-color: var(--primary-color);
             min-height: 70px;
             padding: 0 35px;
-            border-bottom: 1px solid #e8ebef;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .navbar-brand {
             font-size: 22px;
             font-weight: 700;
-            color: #1f2937;
+            color: #ffffff;
             margin-left: 30px;
             text-decoration: none;
         }
 
-        .navbar-brand:hover {
-            color: #1f2937;
+        .navbar-toggler-icon {
+            filter: brightness(0) invert(1);
         }
 
         .nav-link {
-            color: #4b5563;
+            color: rgba(255, 255, 255, 0.85);
             font-size: 15px;
             font-weight: 500;
             padding: 24px 15px !important;
@@ -53,11 +37,12 @@
 
         .nav-link:hover,
         .nav-link.active {
-            color: #2563eb;
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.16);
         }
 
         .nav-link.active {
-            border-bottom: 2px solid #2563eb;
+            border-bottom: 2px solid #ffffff;
         }
 
         /* حساب المعلم */
@@ -74,15 +59,20 @@
         }
 
         .teacher-profile-btn:hover {
-            background-color: #f1f5f9;
+            background-color: rgba(255, 255, 255, 0.16);
+        }
+
+        .teacher-profile-btn .text-dark,
+        .teacher-profile-btn .text-muted {
+            color: #ffffff !important;
         }
 
         .teacher-avatar {
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            background-color: #eff6ff;
-            color: #2563eb;
+            background-color: #ffffff;
+            color: var(--primary-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -98,10 +88,34 @@
             box-shadow: 0 8px 25px rgba(15, 23, 42, 0.10);
         }
 
+        .teacher-dropdown .dropdown-header {
+            background-color: var(--primary-color);
+            border-radius: 0.375rem;
+            color: #ffffff;
+        }
+
+        .teacher-dropdown .dropdown-header strong,
+        .teacher-dropdown .dropdown-header small {
+            color: #ffffff !important;
+        }
+
+        .teacher-dropdown .dropdown-item:not(.text-danger):hover,
+        .teacher-dropdown .dropdown-item:not(.text-danger):focus,
+        .teacher-dropdown .dropdown-item:not(.text-danger):active {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .teacher-dropdown .dropdown-item:not(.text-danger):hover i,
+        .teacher-dropdown .dropdown-item:not(.text-danger):focus i,
+        .teacher-dropdown .dropdown-item:not(.text-danger):active i {
+            color: #ffffff !important;
+        }
+
         .logout-btn {
-            background-color: transparent;
-            border: 1px solid #dc3545;
-            color: #dc3545;
+            background-color: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #ffffff;
             border-radius: 7px;
             padding: 7px 15px;
             font-size: 14px;
@@ -109,8 +123,8 @@
         }
 
         .logout-btn:hover {
-            background-color: #dc3545;
-            color: white;
+            background-color: rgba(255, 255, 255, 0.28);
+            color: #ffffff;
         }
 
         /* Main Container */
@@ -156,8 +170,8 @@
         }
 
         .class-header {
-            background-color: #2563eb;
-            color: white;
+            background-color: var(--primary-color);
+            color: #ffffff;
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
@@ -170,6 +184,42 @@
             margin: 0;
             font-size: 18px;
             font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            opacity: 0.9;
+        }
+
+        .btn-daily-data {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .btn-daily-data:hover,
+        .btn-daily-data:focus,
+        .btn-daily-data:active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+            opacity: 0.9;
+        }
+
+        .class-header .btn-light.text-primary {
+            color: var(--primary-color) !important;
+        }
+
+        .student-average-badge {
+            background-color: var(--primary-color);
+            color: #ffffff;
         }
 
         table {
@@ -200,26 +250,22 @@
             }
         }
     </style>
-</head>
-
-<body>
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
             <!-- حاوية الشعار -->
-            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
-                <img src="{{ asset('images/logo.jpeg') }}"
-                    alt="شعار روضتي"
+            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ $schoolBranding->school_logo ? asset('storage/' . $schoolBranding->school_logo) : asset('images/logo.jpeg') }}"
+                    alt="شعار {{ $schoolBranding->school_name ?? 'روضتي' }}"
                     style="width: 100%; height: 100%; object-fit: contain;">
             </div>
 
             <!-- النصوص بجانب الشعار -->
             <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-                <span style="font-size: 18px; font-weight: 800; color: #2563eb; line-height: 1.2;">روضتي</span>
-                <span style="font-size: 12px; color: #64748b; margin-top: 2px; font-weight: 500;">لوحة تحكم المعلمة</span>
+                <span style="font-size: 18px; font-weight: 800; color: #ffffff; line-height: 1.2;">{{ $schoolBranding->school_name ?? 'روضتي' }}</span>
+                <span style="font-size: 12px; color: rgba(255, 255, 255, 0.85); margin-top: 2px; font-weight: 500;">لوحة تحكم المعلم</span>
             </div>
-            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#teacherNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -247,17 +293,17 @@
                             <i class="bi bi-person-fill"></i>
                         </div>
                         <div class="text-end">
-                            <div class="fw-bold text-dark fs-6">{{ $teacher->name }}</div>
-                            <small class="text-muted d-block" style="font-size: 11px;">معلم</small>
+                            <div class="fw-bold text-white fs-6">{{ $teacher->name }}</div>
+                            <small class="text-white d-block" style="font-size: 11px;">معلم</small>
                         </div>
                         <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 12px;"></i>
                     </button>
 
-                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown">
+                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown manager-account-menu">
                         <li>
-                            <div class="px-3 py-2">
-                                <div class="fw-bold text-dark fs-6">{{ $teacher->name }}</div>
-                                <small class="text-muted">{{ $teacher->email }}</small>
+                            <div class="dropdown-header px-3 py-2">
+                                <div class="fw-bold text-white fs-6">{{ $teacher->name }}</div>
+                                <small class="text-white">{{ $teacher->email }}</small>
                             </div>
                         </li>
                         <li>
@@ -265,12 +311,12 @@
                         </li>
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('teacher.profile') }}">
-                                <i class="bi bi-person-circle me-2 text-primary"></i> الملف الشخصي
+                                <i class="bi bi-person-circle me-2"></i> الملف الشخصي
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('teacher.profile.edit') }}">
-                                <i class="bi bi-pencil-square me-2 text-warning"></i> تعديل البيانات
+                                <i class="bi bi-pencil-square me-2"></i> تعديل البيانات
                             </a>
                         </li>
                         <li>
@@ -429,7 +475,7 @@
                                     @endphp
 
                                     @if($studentAverage !== null)
-                                    <span class="badge bg-success fs-6 px-3 py-1">
+                                    <span class="badge student-average-badge fs-6 px-3 py-1">
                                         {{ $studentAverage }}
                                     </span>
                                     @else
@@ -439,7 +485,7 @@
 
                                 <td>
                                     @if($child->dailyVariables->count() > 0)
-                                    <button class="btn btn-info btn-sm text-white" type="button" data-bs-toggle="collapse" data-bs-target="#daily{{ $child->id }}">
+                                    <button class="btn btn-daily-data btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#daily{{ $child->id }}">
                                         <i class="bi bi-eye me-1"></i> عرض البيانات ({{ $child->dailyVariables->count() }})
                                     </button>
                                     @else
@@ -530,9 +576,4 @@
         </div>
     </div>
 
-    <!-- Bootstrap JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-
-</html>
+@endsection

@@ -486,4 +486,32 @@ class ManagerController extends Controller
 
         return view('manager.classes_notes', compact('students', 'className', 'searchName', 'searchNotes', 'selectedYear'));
     }
+
+    // تحديث إعدادات الروضة (الاسم، الشعار، الألوان)
+    public function updateSettings(Request $request)
+    {
+        $this->checkManager();
+        $manager = auth()->user();
+
+        $request->validate([
+            'school_name' => 'required|string|max:255',
+            'primary_color' => 'required|string|max:7',
+            'school_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+        ]);
+
+        $data = [
+            'school_name' => $request->school_name,
+            'primary_color' => $request->primary_color,
+        ];
+
+        // رفع الشعار الجديد إن وجد
+        if ($request->hasFile('school_logo')) {
+            $logoPath = $request->file('school_logo')->store('logos', 'public');
+            $data['school_logo'] = $logoPath;
+        }
+
+        $manager->update($data);
+
+        return back()->with('success', 'تم تحديث إعدادات المدرسة بنجاح.');
+    }
 }

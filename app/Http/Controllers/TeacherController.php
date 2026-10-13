@@ -28,6 +28,9 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
+        $schoolBranding = User::where('role', 'manager')
+            ->where('school_name', $teacher->school_name)
+            ->first() ?? $teacher;
 
         // جلب الطلاب المسندين لهذا المعلم
         $students = $teacher->childrenAsTeacher()
@@ -51,7 +54,8 @@ class TeacherController extends Controller
             'dailyVariables',
             'studentsCount',
             'latestDailyVariable',
-            'classes'
+            'classes',
+            'schoolBranding'
         ));
     }
 
@@ -81,6 +85,9 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
+        $schoolBranding = User::where('role', 'manager')
+            ->where('school_name', $teacher->school_name)
+            ->first() ?? $teacher;
 
         $availableClasses = $teacher->childrenAsTeacher()
             ->whereNotNull('class')
@@ -152,7 +159,7 @@ class TeacherController extends Controller
             return 99;
         });
 
-        return view('teacher.classes', compact('teacher', 'classes', 'availableClasses'));
+        return view('teacher.classes', compact('teacher', 'classes', 'availableClasses', 'schoolBranding'));
     }
     // 3. عرض تفاصيل طالب
     public function showStudent($id)
@@ -268,6 +275,9 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
+        $schoolBranding = User::where('role', 'manager')
+            ->where('school_name', $teacher->school_name)
+            ->first() ?? $teacher;
 
         // جلب طلاب المعلم مع المتغيرات اليومية الخاصة بكل طالب
         $students = $teacher->childrenAsTeacher()
@@ -276,7 +286,8 @@ class TeacherController extends Controller
 
         return view('teacher.daily_variables', compact(
             'teacher',
-            'students'
+            'students',
+            'schoolBranding'
         ));
     }
 
@@ -286,11 +297,14 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
+        $schoolBranding = User::where('role', 'manager')
+            ->where('school_name', $teacher->school_name)
+            ->first() ?? $teacher;
 
         // جلب قائمة الأمهات لاختيار الأم من القائمة
         $mothers = User::where('role', 'mother')->get();
 
-        return view('teacher.student.create', compact('teacher', 'mothers'));
+        return view('teacher.student.create', compact('teacher', 'mothers', 'schoolBranding'));
     }
 
     // 8. حفظ بيانات الطفل الجديد

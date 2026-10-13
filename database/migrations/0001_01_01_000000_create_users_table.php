@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('school_name')->nullable();
             $table->enum('role', ['admin', 'manager', 'mother', 'teacher'])->default('mother');
             $table->enum('status', ['pending', 'approved', 'rejected', 'deactivated'])->default('pending');
+            $table->string('school_logo')->nullable();
+            $table->string('primary_color')->default('#2563eb');
             $table->rememberToken();
             $table->timestamps();
         });

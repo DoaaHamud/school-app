@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/students/{id}', [ManagerController::class, 'destroyStudent'])->name('students.destroy');
         Route::get('/classes/{className}/grades', [ManagerController::class, 'showClassGrades'])->name('classes.grades');
         Route::get('/classes/{className}/notes', [ManagerController::class, 'showClassNotes'])->name('classes.notes');
+        Route::put('/settings/update', [ManagerController::class, 'updateSettings'])->name('settings.update');
     });
 
     // --------------------------------------
