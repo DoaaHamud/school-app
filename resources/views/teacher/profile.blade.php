@@ -1,95 +1,102 @@
 @extends('layouts.app')
 
 @section('content')
-    <style>
-        .main-container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
 
-        .profile-card {
-            background: white;
-            border: 1px solid #e8ebef;
-            border-radius: 12px;
-            padding: 30px;
-        }
+<div class="container my-5" style="max-width: 750px;">
 
-        .avatar-box {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: color-mix(in srgb, var(--primary-color) 10%, white);
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-        }
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill ms-1"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+    </div>
+    @endif
 
-        .profile-role-badge {
-            background: color-mix(in srgb, var(--primary-color) 10%, white);
-            color: var(--primary-color);
-            border-color: color-mix(in srgb, var(--primary-color) 25%, white) !important;
-        }
+    @if($errors->any())
+    <div class="alert alert-danger shadow-sm" role="alert">
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
-        .profile-title {
-            color: var(--primary-color);
-        }
-    </style>
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                style="width: 70px; height: 70px; background-color: var(--primary-color) !important; font-size: 30px;">
+                <i class="bi bi-person-fill"></i>
+            </div>
 
-    <div class="container main-container">
-
-        @if(session('success'))
-        <div class="alert alert-success shadow-sm mb-4 alert-dismissible fade show">
-            <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div>
+                <h3 class="fw-bold m-0 text-dark" style="font-size: 22px;">{{ $teacher->name }}</h3>
+                <p class="text-muted m-0 small mt-1">معلم</p>
+            </div>
         </div>
-        @endif
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold mb-0 profile-title">الملف الشخصي</h3>
-            <a href="{{ route('teacher.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-right me-1"></i> العودة للرئيسية
+        <div class="card border-0 bg-light rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-person-vcard ms-2" style="color: var(--primary-color);"></i>
+                    المعلومات الشخصية
+                </h5>
+                <p class="text-muted small mb-4">يمكنك تعديل معلوماتك مباشرة من هذه الصفحة.</p>
+
+                <form action="{{ route('teacher.profile.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">الاسم الكامل</label>
+                        <input id="name" type="text" name="name"
+                            class="form-control @error('name') is-invalid @enderror"
+                            value="{{ old('name', $teacher->name) }}" required>
+                        @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">البريد الإلكتروني</label>
+                        <input id="email" type="email" name="email"
+                            class="form-control @error('email') is-invalid @enderror"
+                            value="{{ old('email', $teacher->email) }}" required>
+                        @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-semibold">رقم الهاتف</label>
+                        <input id="phone" type="text" name="phone"
+                            class="form-control @error('phone') is-invalid @enderror"
+                            value="{{ old('phone', $teacher->phone) }}">
+                        @error('phone')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="school_name" class="form-label fw-semibold">اسم الروضة / المدرسة</label>
+                        <input id="school_name" type="text" class="form-control"
+                            value="{{ $teacher->school_name ?? 'غير محدد' }}" disabled>
+                    </div>
+
+                    <button type="submit" class="btn text-white fw-bold px-4 py-2"
+                        style="background-color: var(--primary-color); border-color: var(--primary-color); border-radius: 9px;">
+                        <i class="bi bi-save ms-1"></i> حفظ التغييرات
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2 pt-2">
+            <a href="{{ route('teacher.dashboard') }}" class="btn btn-light border fw-semibold px-4 py-2"
+                style="border-radius: 9px; color: #334155;">
+                العودة للوحة التحكم
             </a>
         </div>
-
-        <div class="profile-card shadow-sm">
-            <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3">
-                <div class="avatar-box">
-                    <i class="bi bi-person-fill"></i>
-                </div>
-                <div>
-                    <h4 class="fw-bold mb-1">{{ $teacher->name }}</h4>
-                    <span class="badge border px-3 py-2 profile-role-badge">معلم</span>
-                </div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="text-muted small d-block">الاسم الكامل</label>
-                    <div class="fw-semibold fs-6 mt-1">{{ $teacher->name }}</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="text-muted small d-block">البريد الإلكتروني</label>
-                    <div class="fw-semibold fs-6 mt-1">{{ $teacher->email }}</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="text-muted small d-block">رقم الهاتف</label>
-                    <div class="fw-semibold fs-6 mt-1">{{ $teacher->phone ?? 'غير محدد' }}</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="text-muted small d-block">اسم الروضة / المدرسة</label>
-                    <div class="fw-semibold fs-6 mt-1">{{ $teacher->school_name ?? 'غير محدد' }}</div>
-                </div>
-            </div>
-
-            <div class="mt-4 pt-3 border-top d-flex gap-2">
-                <a href="{{ route('teacher.profile.edit') }}" class="btn btn-warning text-dark px-4">
-                    <i class="bi bi-pencil-square me-1"></i> تعديل البيانات
-                </a>
-            </div>
-        </div>
     </div>
+</div>
 
 @endsection

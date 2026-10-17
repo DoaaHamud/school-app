@@ -1,102 +1,96 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الملف الشخصي - روضتي</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body {
-            margin: 0;
-            background: #f5f7fb;
-            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-            color: #273142;
-        }
+@section('content')
 
-        .navbar-custom {
-            background: white;
-            min-height: 70px;
-            padding: 0 35px;
-            border-bottom: 1px solid #e7ebf0;
-        }
+<div class="container my-5" style="max-width: 750px;">
 
-        .navbar-brand {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1f2937;
-        }
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill ms-1"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+    </div>
+    @endif
 
-        .main-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+    @if($errors->any())
+    <div class="alert alert-danger shadow-sm" role="alert">
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
-        .profile-card {
-            background: white;
-            border: 1px solid #e5eaf0;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
-        }
-    </style>
-</head>
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                style="width: 70px; height: 70px; background-color: var(--primary-color) !important; font-size: 30px;">
+                <i class="bi bi-person-fill"></i>
+            </div>
 
-<body>
+            <div>
+                <h3 class="fw-bold m-0 text-dark" style="font-size: 22px;">{{ $mother->name }}</h3>
+                <p class="text-muted m-0 small mt-1">ولي أمر (أم)</p>
+            </div>
+        </div>
 
-    <nav class="navbar navbar-expand-lg navbar-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('mother.dashboard') }}">روضتي</a>
-            <a href="{{ route('mother.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-right me-1"></i> العودة للرئيسية
+        <div class="card border-0 bg-light rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-person-vcard ms-2" style="color: var(--primary-color);"></i>
+                    المعلومات الشخصية
+                </h5>
+                <p class="text-muted small mb-4">يمكنك تعديل معلوماتك مباشرة من هذه الصفحة.</p>
+
+                <form action="{{ route('mother.profile.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="mb-3">
+                        <label for="mother_name" class="form-label fw-semibold">الاسم الكامل</label>
+                        <input id="mother_name" type="text" name="name"
+                            class="form-control @error('name') is-invalid @enderror"
+                            value="{{ old('name', $mother->name) }}" maxlength="255" required>
+                        @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mother_email" class="form-label fw-semibold">البريد الإلكتروني</label>
+                        <input id="mother_email" type="email" name="email"
+                            class="form-control @error('email') is-invalid @enderror"
+                            value="{{ old('email', $mother->email) }}" maxlength="255" required>
+                        @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="mother_phone" class="form-label fw-semibold">رقم الهاتف</label>
+                        <input id="mother_phone" type="text" name="phone"
+                            class="form-control @error('phone') is-invalid @enderror"
+                            value="{{ old('phone', $mother->phone ?? '') }}" maxlength="20">
+                        @error('phone')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="btn text-white fw-bold px-4 py-2"
+                        style="background-color: var(--primary-color); border-color: var(--primary-color); border-radius: 9px;">
+                        <i class="bi bi-save ms-1"></i> حفظ التغييرات
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2 pt-2">
+            <a href="{{ route('mother.dashboard') }}" class="btn btn-light border fw-semibold px-4 py-2"
+                style="border-radius: 9px; color: #334155;">
+                العودة للوحة التحكم
             </a>
         </div>
-    </nav>
-
-    <div class="main-container">
-        @if(session('success'))
-        <div class="alert alert-success shadow-sm mb-4">
-            <i class="bi bi-check-circle-fill me-1"></i> {{ session('success') }}
-        </div>
-        @endif
-
-        <div class="profile-card">
-            <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                <div style="width: 60px; height: 60px; border-radius: 50%; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 26px;">
-                    <i class="bi bi-person-fill"></i>
-                </div>
-                <div>
-                    <h3 class="fw-bold mb-1">{{ $mother->name }}</h3>
-                    <span class="text-muted small">حساب ولي أمر (أم)</span>
-                </div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="text-muted small d-block">الاسم الكامل</label>
-                    <span class="fw-bold fs-6 text-dark">{{ $mother->name }}</span>
-                </div>
-                <div class="col-md-6">
-                    <label class="text-muted small d-block">البريد الإلكتروني</label>
-                    <span class="fw-bold fs-6 text-dark">{{ $mother->email }}</span>
-                </div>
-                <div class="col-md-6 mt-3">
-                    <label class="text-muted small d-block">رقم الهاتف</label>
-                    <span class="fw-bold fs-6 text-dark">{{ $mother->phone ?? 'غير متوفر' }}</span>
-                </div>
-            </div>
-
-            <div class="mt-4 pt-3 border-top d-flex gap-2">
-                <a href="{{ route('mother.profile.edit') }}" class="btn btn-primary">
-                    <i class="bi bi-pencil-square me-1"></i> تعديل البيانات
-                </a>
-            </div>
-        </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+@endsection

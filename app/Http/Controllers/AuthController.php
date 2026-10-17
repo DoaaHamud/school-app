@@ -3,19 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Notifications\TeacherRegistrationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
     public function showRegisterForm()
     {
-        return view('auth.register');
+        $schoolNames = User::where('role', 'manager')
+            ->where('status', 'approved')
+            ->whereNotNull('school_name')
+            ->distinct()
+            ->orderBy('school_name')
+            ->pluck('school_name');
+
+        return view('auth.register', compact('schoolNames'));
     }
 
     public function register(Request $request)
     {
+        $schoolNameRules = ['nullable', 'string', 'max:255'];
+
+        if ($request->input('role') === 'teacher') {
+            $schoolNameRules = [
+                'required',
+                'string',
+                'max:255',
+                Rule::exists('users', 'school_name')
+                    ->where(fn ($query) => $query
+                        ->where('role', 'manager')
+                        ->where('status', 'approved')),
+            ];
+        }
+
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'username'    => 'required|string|max:255|unique:users',
@@ -23,7 +46,7 @@ class AuthController extends Controller
             'password'    => 'required|string|min:8|confirmed',
             'role'        => 'required|in:manager,teacher,mother',
             'phone'       => 'required|numeric',
-            'school_name' => 'nullable|string|max:255',
+            'school_name' => $schoolNameRules,
         ]);
 
         // ولي الأمر مفعل فوراً، بينما المدير والمعلم ينتظرون الموافقة
@@ -39,6 +62,15 @@ class AuthController extends Controller
             'school_name' => $validated['school_name'] ?? null,
             'status'      => $status,
         ]);
+
+        if ($user->role === 'teacher' && $user->school_name !== null) {
+            User::where('role', 'manager')
+                ->where('status', 'approved')
+                ->where('school_name', $user->school_name)
+                ->each(fn (User $manager) => $manager->notify(
+                    new TeacherRegistrationNotification($user)
+                ));
+        }
 
         if ($user->status === 'pending') {
             return redirect()->route('login')->with('success', 'تم إنشاء الحساب بنجاح، وهو بانتظار موافقة المسؤول.');

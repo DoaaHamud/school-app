@@ -29,7 +29,7 @@
             font-size: 15px;
             font-weight: 500;
             padding: 24px 15px !important;
-            transition: 0.2s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .nav-link:hover,
@@ -185,18 +185,29 @@
         }
 
         /* Student Card */
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+
         .student-card {
             background: #ffffff;
             border: 1px solid #e6eaf0;
             border-radius: 14px;
-            margin-bottom: 25px;
             overflow: hidden;
             box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
             transition: 0.2s;
         }
 
+        .empty-students {
+            grid-column: 1 / -1;
+        }
+
         .student-card:hover {
-            box-shadow: 0 7px 22px rgba(15, 23, 42, 0.07);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.09);
         }
 
         .student-header {
@@ -207,6 +218,46 @@
             justify-content: space-between;
             align-items: center;
             gap: 20px;
+        }
+
+        .student-toggle {
+            width: 100%;
+            border: 0;
+            color: inherit;
+            text-align: right;
+            cursor: pointer;
+        }
+
+        .student-expand-icon {
+            color: var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+
+        .student-toggle[aria-expanded="true"] .student-expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .latest-report-preview {
+            padding: 16px 25px;
+            background: #ffffff;
+        }
+
+        .latest-report-preview-label {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .latest-report-preview-topic {
+            color: #1f2937;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .latest-report-preview-date {
+            color: #6b7280;
+            font-size: 12px;
         }
 
         .student-main-info {
@@ -404,6 +455,13 @@
                 align-items: stretch;
             }
         }
+
+        @media (max-width: 768px) {
+            .students-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+        }
     </style>
 
     <!-- Navbar -->
@@ -470,18 +528,6 @@
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item py-2" href="{{ route('teacher.profile.edit') }}">
-                                <i class="bi bi-pencil-square me-2"></i> تعديل البيانات
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteTeacherModal">
-                                <i class="bi bi-trash me-2"></i> حذف الحساب
-                            </button>
-                        </li>
                     </ul>
                 </div>
 
@@ -604,9 +650,35 @@
         </div>
 
         <!-- Students & Daily Reports List -->
+        @if($students->isNotEmpty())
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label for="studentNameSearch" class="form-label fw-bold text-secondary small">
+                    <i class="bi bi-search me-1" style="color: var(--primary-color);"></i> البحث باسم الطفل
+                </label>
+                <input type="search" id="studentNameSearch" class="form-control" placeholder="اكتب اسم الطفل">
+            </div>
+            <div class="col-md-6">
+                <label for="studentClassSearch" class="form-label fw-bold text-secondary small">
+                    <i class="bi bi-mortarboard me-1" style="color: var(--primary-color);"></i> البحث حسب الصف
+                </label>
+                <input type="search" id="studentClassSearch" class="form-control" placeholder="اكتب اسم الصف">
+            </div>
+        </div>
+        <div id="noStudentSearchResults" class="alert alert-light border text-center d-none" role="status" aria-live="polite">
+            لا توجد بطاقات تطابق البحث.
+        </div>
+        @endif
+
+        <div class="students-grid">
         @forelse($students as $student)
-        <div class="student-card">
-            <div class="student-header">
+        @php
+            $latestDaily = $student->latestDailyVariable;
+        @endphp
+        <div class="student-card" data-student-name="{{ $student->name }}" data-student-class="{{ $student->class ?? '' }}">
+            <button type="button" class="student-header student-toggle" data-bs-toggle="collapse"
+                data-bs-target="#studentReports{{ $student->id }}" aria-expanded="false"
+                aria-controls="studentReports{{ $student->id }}">
                 <div class="student-main-info">
                     <div class="student-avatar-large">
                         <i class="bi bi-person"></i>
@@ -616,108 +688,46 @@
                         <div class="student-meta">
                             <span><i class="bi bi-mortarboard"></i> الصف: {{ $student->class ?? 'غير محدد' }}</span>
                             <span><i class="bi bi-calendar3"></i> العمر: {{ $student->age ?? 'غير محدد' }}</span>
-                            <span><i class="bi bi-journal-text"></i> {{ $student->dailyVariables->count() }} تقرير</span>
+                            <span><i class="bi bi-journal-text"></i> {{ $student->daily_variables_count }} تقرير</span>
                         </div>
                     </div>
                 </div>
+                <i class="bi bi-chevron-down student-expand-icon" aria-hidden="true"></i>
+            </button>
+
+            <div class="latest-report-preview">
+                @if($latestDaily)
+                <div class="latest-report-preview-label">آخر تحديث للمتغيرات اليومية</div>
+                <div class="latest-report-preview-topic">
+                    <i class="bi bi-bookmark text-primary me-1"></i> {{ $latestDaily->topic }}
+                </div>
+                <div class="latest-report-preview-date">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ \Carbon\Carbon::parse($latestDaily->report_date)->format('Y-m-d H:i') }}
+                    @if(!is_null($latestDaily->result))
+                    <span class="mx-1">|</span> النتيجة: {{ $latestDaily->result }}
+                    @endif
+                </div>
+                @else
+                <div class="latest-report-preview-label mb-0">لا توجد تقارير يومية لهذا الطفل حتى الآن.</div>
+                @endif
             </div>
 
-            <div class="reports-container">
-                <div class="reports-header">
-                    <div class="reports-title">
-                        <i class="bi bi-journal-text"></i> التقارير اليومية السابقة
-                    </div>
-                    <span class="report-count">{{ $student->dailyVariables->count() }} سجل</span>
-                </div>
-
-                @forelse($student->dailyVariables->sortByDesc('report_date') as $daily)
-                <div class="report-item">
-                    <div class="report-top">
-                        <div class="report-topic">
-                            <i class="bi bi-bookmark text-primary me-1"></i> {{ $daily->topic }}
+            <div class="collapse" id="studentReports{{ $student->id }}"
+                data-reports-url="{{ route('teacher.student.daily_reports', $student->id) }}" data-loaded="false">
+                <div class="reports-container">
+                    <div class="reports-header">
+                        <div class="reports-title">
+                            <i class="bi bi-journal-text"></i> التقارير اليومية السابقة
                         </div>
-                        <div class="report-date">
-                            <i class="bi bi-calendar3 me-1"></i> {{ \Carbon\Carbon::parse($daily->report_date)->format('Y-m-d H:i') }}
-                        </div>
+                        <span class="report-count">{{ $student->daily_variables_count }} سجل</span>
                     </div>
-
-                    <div class="report-details">
-                        <span class="result-badge">
-                            <i class="bi bi-bar-chart"></i> النتيجة: {{ $daily->result ?? 'غير محددة' }}
-                        </span>
-                    </div>
-
-                    @if($daily->notes)
-                    <div class="report-notes">
-                        <strong>الملاحظات: </strong>{{ $daily->notes }}
-                    </div>
-                    @endif
-
-                    <div class="report-actions">
-                        <button type="button" class="edit-btn" data-bs-toggle="modal" data-bs-target="#editReportModal{{ $daily->id }}">
-                            <i class="bi bi-pencil me-1"></i> تعديل
-                        </button>
-
-                        <form action="{{ route('teacher.daily_delete', $daily->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا التقرير؟');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="delete-btn">
-                                <i class="bi bi-trash me-1"></i> حذف
-                            </button>
-                        </form>
-                    </div>
+                    <div class="report-items"></div>
+                    <div class="report-loading text-center text-muted py-3 d-none" role="status" aria-live="polite"></div>
+                    <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-2 load-more-reports d-none">
+                        تحميل المزيد
+                    </button>
                 </div>
-
-                <!-- Edit Modal -->
-                <div class="modal fade" id="editReportModal{{ $daily->id }}" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content border-0 shadow">
-                            <div class="modal-header border-bottom">
-                                <h5 class="modal-title fw-bold">تعديل التقرير اليومي</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-
-                            <form action="{{ route('teacher.daily_update', $daily->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-secondary small">موضوع النشاط</label>
-                                        <input type="text" name="topic" class="form-control" value="{{ $daily->topic }}" required>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-secondary small">النتيجة</label>
-                                        <input type="number" name="result" class="form-control" min="0" max="100" step="0.01" value="{{ $daily->result }}">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-secondary small">الملاحظات</label>
-                                        <textarea name="notes" class="form-control" rows="3">{{ $daily->notes }}</textarea>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-secondary small">تاريخ التقرير</label>
-                                        <input type="datetime-local" name="report_date" class="form-control" value="{{ \Carbon\Carbon::parse($daily->report_date)->format('Y-m-d\TH:i') }}" required>
-                                    </div>
-                                </div>
-
-                                <div class="modal-footer border-top">
-                                    <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">إلغاء</button>
-                                    <button type="submit" class="btn btn-primary px-4">حفظ التعديلات</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                @empty
-                <div class="empty-reports">
-                    <i class="bi bi-journal-x display-6 d-block mb-2 text-muted"></i>
-                    <div>لا توجد تقارير يومية لهذا الطفل حتى الآن.</div>
-                </div>
-                @endforelse
             </div>
         </div>
         @empty
@@ -727,38 +737,9 @@
             <p class="text-muted">لا يمكنك إضافة تقرير يومي قبل وجود أطفال مرتبطين بك.</p>
         </div>
         @endforelse
+        </div>
 
     </main>
-
-    <!-- Modal تحذير حذف الحساب -->
-    <div class="modal fade" id="deleteTeacherModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fs-6">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> تحذير: حذف الحساب
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center py-4">
-                    <i class="bi bi-trash3-fill text-danger display-4 mb-3 d-block"></i>
-                    <h6 class="fw-bold text-dark mb-2">هل أنت متأكد من حذف حسابك؟</h6>
-                    <p class="text-muted small mb-0">سيتم حذف حساب المعلم نهائياً ولا يمكن التراجع عن هذه العملية.</p>
-                </div>
-                <div class="modal-footer bg-light justify-content-center border-0">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
-
-                    <form action="{{ route('teacher.profile.delete') }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger px-4">
-                            <i class="bi bi-trash3 me-1"></i> نعم، احذف الحساب
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Script Filtering & Form Action Handler -->
     <script>
@@ -767,6 +748,116 @@
             const studentFilter = document.getElementById('studentFilter');
             const reportForm = document.getElementById('dailyReportForm');
             const saveButton = document.getElementById('saveReportBtn');
+            const studentNameSearch = document.getElementById('studentNameSearch');
+            const studentClassSearch = document.getElementById('studentClassSearch');
+            const noStudentSearchResults = document.getElementById('noStudentSearchResults');
+
+            const loadStudentReports = async function(collapse, page) {
+                if (collapse.dataset.loading === 'true') {
+                    return;
+                }
+
+                const reportItems = collapse.querySelector('.report-items');
+                const reportStatus = collapse.querySelector('.report-loading');
+                const loadMoreButton = collapse.querySelector('.load-more-reports');
+
+                collapse.dataset.loading = 'true';
+                reportStatus.classList.remove('d-none');
+                reportStatus.textContent = 'جاري تحميل التقارير...';
+                loadMoreButton.disabled = true;
+
+                try {
+                    const response = await fetch(`${collapse.dataset.reportsUrl}?page=${page}`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('تعذر تحميل التقارير اليومية.');
+                    }
+
+                    const result = await response.json();
+                    const template = document.createElement('template');
+                    template.innerHTML = result.html;
+                    const pageItems = template.content.querySelector('.report-page-items');
+                    const pageModals = template.content.querySelector('.report-page-modals');
+
+                    if (!pageItems || !pageModals) {
+                        throw new Error('تعذر عرض التقارير اليومية.');
+                    }
+
+                    reportItems.append(...pageItems.childNodes);
+                    document.body.append(...pageModals.childNodes);
+
+                    collapse.dataset.loaded = 'true';
+                    collapse.dataset.nextPage = result.next_page;
+                    loadMoreButton.classList.toggle('d-none', !result.has_more);
+                    reportStatus.textContent = '';
+                    reportStatus.classList.toggle('d-none', result.total > 0);
+
+                    if (result.total === 0) {
+                        reportStatus.textContent = 'لا توجد تقارير يومية لهذا الطفل حتى الآن.';
+                    }
+                } catch (error) {
+                    reportStatus.replaceChildren(document.createTextNode('تعذر تحميل التقارير اليومية. '));
+                    const retryButton = document.createElement('button');
+                    retryButton.type = 'button';
+                    retryButton.className = 'btn btn-link btn-sm p-0 retry-reports';
+                    retryButton.textContent = 'إعادة المحاولة';
+                    retryButton.addEventListener('click', function() {
+                        loadStudentReports(collapse, page);
+                    });
+                    reportStatus.appendChild(retryButton);
+                    reportStatus.classList.remove('d-none');
+                } finally {
+                    collapse.dataset.loading = 'false';
+                    loadMoreButton.disabled = false;
+                }
+            };
+
+            document.querySelectorAll('.collapse[data-reports-url]').forEach(function(collapse) {
+                collapse.addEventListener('shown.bs.collapse', function() {
+                    if (collapse.dataset.loaded !== 'true') {
+                        loadStudentReports(collapse, 1);
+                    }
+                });
+
+                collapse.querySelector('.load-more-reports').addEventListener('click', function() {
+                    loadStudentReports(collapse, Number(collapse.dataset.nextPage || 2));
+                });
+            });
+
+            if (studentNameSearch && studentClassSearch && noStudentSearchResults) {
+                const studentCards = Array.from(document.querySelectorAll('.student-card'));
+                const normalizeSearchValue = value => value
+                    .toLocaleLowerCase()
+                    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+                    .trim();
+
+                const filterStudentCards = function() {
+                    const nameQuery = normalizeSearchValue(studentNameSearch.value);
+                    const classQuery = normalizeSearchValue(studentClassSearch.value);
+                    let visibleCards = 0;
+
+                    studentCards.forEach(function(card) {
+                        const matchesName = normalizeSearchValue(card.dataset.studentName || '').includes(nameQuery);
+                        const matchesClass = normalizeSearchValue(card.dataset.studentClass || '').includes(classQuery);
+                        const isVisible = matchesName && matchesClass;
+
+                        card.hidden = !isVisible;
+                        if (isVisible) {
+                            visibleCards++;
+                        }
+                    });
+
+                    noStudentSearchResults.classList.toggle('d-none', visibleCards > 0);
+                };
+
+                studentNameSearch.addEventListener('input', filterStudentCards);
+                studentClassSearch.addEventListener('input', filterStudentCards);
+            }
 
             const allStudentOptions = Array.from(studentFilter.options)
                 .filter(option => option.value !== '')

@@ -1,6 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    .btn-deactivate {
+        background-color: color-mix(in srgb, var(--primary-color) 16%, white);
+        border-color: color-mix(in srgb, var(--primary-color) 35%, white);
+        color: var(--primary-color);
+    }
+
+    .btn-deactivate:hover,
+    .btn-deactivate:focus {
+        background-color: color-mix(in srgb, var(--primary-color) 26%, white);
+        border-color: color-mix(in srgb, var(--primary-color) 45%, white);
+        color: var(--primary-color);
+    }
+</style>
 
 <!-- Navbar ملون بالكامل باللون المختار -->
 <nav class="navbar navbar-expand-lg main-navbar mb-4" style="background-color: var(--primary-color) !important;">
@@ -38,7 +52,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white {{ request()->routeIs('manager.students') ? 'opacity-100 fw-bold bg-white-10' : 'opacity-75' }}" href="{{ route('manager.students') }}" style="background: rgba(255,255,255,0.15); border-radius: 8px;">
+                    <a class="nav-link text-white {{ request()->routeIs('manager.students*') ? 'opacity-100 fw-bold bg-white-10' : 'opacity-75' }}" href="{{ route('manager.students') }}" style="background: rgba(255,255,255,0.15); border-radius: 8px;">
                         <i class="bi bi-mortarboard-fill ms-1"></i> دليل الطلاب
                     </a>
                 </li>
@@ -72,19 +86,6 @@
                                 <i class="bi bi-person-circle ms-1"></i> الملف الشخصي
                             </a>
                         </li>
-                        <li>
-                            <a class="dropdown-item rounded-2 py-2" href="{{ route('manager.profile.edit') }}">
-                                <i class="bi bi-pencil-square ms-1"></i> تعديل البيانات
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider my-2">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item rounded-2 py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteManagerModal">
-                                <i class="bi bi-trash ms-1"></i> حذف الحساب
-                            </button>
-                        </li>
                     </ul>
                 </div>
 
@@ -109,8 +110,16 @@
     </div>
     @endif
 
-    <h1 class="page-title fw-bold" style="font-size: 26px; color: #1f2937;">دليل الطلاب</h1>
-    <p class="page-subtitle text-muted small mb-4">عرض وإدارة بيانات الطلاب والتقارير اليومية بحسب الصفوف الدراسية</p>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="page-title fw-bold mb-1" style="font-size: 26px; color: #1f2937;">دليل الطلاب</h1>
+            <p class="page-subtitle text-muted small mb-0">عرض وإدارة بيانات الطلاب والتقارير اليومية بحسب الصفوف الدراسية</p>
+        </div>
+        <a href="{{ route('manager.students.deactivated') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-person-x ms-1"></i> الطلاب غير المفعلين
+            <span class="badge bg-secondary ms-1">{{ $deactivatedStudentsCount }}</span>
+        </a>
+    </div>
 
     <!-- Search & Filter Card -->
     <div class="task-card shadow-sm rounded-4 mb-4" style="background: white; border: 1px solid #e8eaf0;">
@@ -226,34 +235,33 @@
                             @endif
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1" style="font-size: 12px; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#deleteStudentModal{{ $student->id }}">
-                                <i class="bi bi-trash"></i> حذف
+                            <button type="button" class="btn btn-sm btn-deactivate px-2 py-1" style="font-size: 12px; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#deactivateStudentModal{{ $student->id }}">
+                                <i class="bi bi-person-x"></i> إلغاء التفعيل
                             </button>
 
-                            <!-- Modal حذف الطالب -->
-                            <div class="modal fade" id="deleteStudentModal{{ $student->id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="deactivateStudentModal{{ $student->id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow rounded-4">
-                                        <div class="modal-header bg-danger text-white">
+                                        <div class="modal-header bg-warning text-dark">
                                             <h5 class="modal-title fs-6">
-                                                <i class="bi bi-exclamation-triangle-fill ms-1"></i> تأكيد حذف الطالب
+                                                <i class="bi bi-exclamation-triangle-fill ms-1"></i> تأكيد إلغاء التفعيل
                                             </h5>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                                         </div>
                                         <div class="modal-body text-center py-4">
                                             <div class="mb-3">
-                                                <i class="bi bi-trash3-fill text-danger display-4"></i>
+                                                <i class="bi bi-person-x-fill text-warning display-4"></i>
                                             </div>
-                                            <h5 class="mb-2 fw-bold text-dark">هل أنت متأكد من حذف الطالب ({{ $student->name }})؟</h5>
-                                            <p class="text-muted mb-0 small">سيتم حذف الطالب وكافة تقاريره المسجلة بشكل نهائي.</p>
+                                            <h5 class="mb-2 fw-bold text-dark">هل تريد إلغاء تفعيل الطالب ({{ $student->name }})؟</h5>
+                                            <p class="text-muted mb-0 small">سيختفي من القوائم النشطة مع الاحتفاظ ببياناته وتقاريره، ويمكن إعادة تفعيله لاحقًا.</p>
                                         </div>
                                         <div class="modal-footer justify-content-center border-0 bg-light">
                                             <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
-                                            <form action="{{ route('manager.students.destroy', $student->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('manager.students.deactivate', $student->id) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger px-4">
-                                                    <i class="bi bi-trash3"></i> نعم، حذف
+                                                @method('PATCH')
+                                                <button type="submit" class="btn btn-deactivate px-4">
+                                                    <i class="bi bi-person-x"></i> نعم، إلغاء التفعيل
                                                 </button>
                                             </form>
                                         </div>

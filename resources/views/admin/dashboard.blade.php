@@ -276,13 +276,34 @@
                 <h5 class="task-title">
                     <i class="bi bi-people-fill"></i> قائمة المدراء المفعلين
                 </h5>
-                <span class="badge bg-white text-dark px-3 py-2" style="font-size: 13px;">{{ $approvedManagers->count() }}</span>
+                <span class="badge bg-white text-dark px-3 py-2" style="font-size: 13px;">{{ $approvedManagerCount }}</span>
             </div>
-            <div class="card-body p-0">
-                @if($approvedManagers->isEmpty())
+            <div class="card-body">
+                <form action="{{ route('admin.dashboard') }}" method="GET" class="row g-2 align-items-end mb-3">
+                    <div class="col-md-8">
+                        <label for="managerSearch" class="form-label fw-bold small text-secondary">البحث باسم المدير</label>
+                        <input type="search" id="managerSearch" name="manager_search" class="form-control"
+                            value="{{ is_string($managerSearch) ? $managerSearch : '' }}" placeholder="اكتب اسم المدير">
+                    </div>
+                    <div class="col-md-auto d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search ms-1"></i> بحث
+                        </button>
+                        @if(is_string($managerSearch) && $managerSearch !== '')
+                        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">مسح</a>
+                        @endif
+                    </div>
+                </form>
+
+                @if($approvedManagerCount === 0)
                 <div class="empty-message">
                     <i class="bi bi-people fs-1 d-block mb-2"></i>
                     لا يوجد مدراء مفعلون حالياً.
+                </div>
+                @elseif($approvedManagers->isEmpty())
+                <div class="empty-message">
+                    <i class="bi bi-search fs-1 d-block mb-2"></i>
+                    لا يوجد مدير بهذا الاسم.
                 </div>
                 @else
                 <div class="table-responsive">

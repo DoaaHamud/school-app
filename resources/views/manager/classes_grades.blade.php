@@ -72,19 +72,6 @@
                                 <i class="bi bi-person-circle ms-1"></i> الملف الشخصي
                             </a>
                         </li>
-                        <li>
-                            <a class="dropdown-item rounded-2 py-2" href="{{ route('manager.profile.edit') }}">
-                                <i class="bi bi-pencil-square ms-1"></i> تعديل البيانات
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider my-2">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item rounded-2 py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteManagerModal">
-                                <i class="bi bi-trash ms-1"></i> حذف الحساب
-                            </button>
-                        </li>
                     </ul>
                 </div>
 

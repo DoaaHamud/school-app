@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\chaldrin;
 use App\Models\Daily_variables;
+use App\Notifications\NewDailyReportNotification;
 use Illuminate\Http\Request;
 
 class TeacherController extends Controller
@@ -42,6 +43,8 @@ class TeacherController extends Controller
             ->get();
 
         $latestDailyVariable = $dailyVariables->first();
+        $teacherNotifications = $teacher->notifications()->latest()->take(5)->get();
+        $unreadNotificationsCount = $teacher->unreadNotifications()->count();
 
         // 2. عدد الطلاب المسجلين
         $studentsCount = $students->count();
@@ -55,8 +58,23 @@ class TeacherController extends Controller
             'studentsCount',
             'latestDailyVariable',
             'classes',
-            'schoolBranding'
+            'schoolBranding',
+            'teacherNotifications',
+            'unreadNotificationsCount'
         ));
+    }
+
+    public function openNotification(string $notificationId)
+    {
+        $this->checkTeacher();
+
+        $notification = auth()->user()->notifications()->findOrFail($notificationId);
+
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        return redirect()->route('teacher.classes');
     }
 
     // // 2. عرض طلاب المعلم
@@ -199,7 +217,7 @@ class TeacherController extends Controller
             'report_date' => 'required|date',
         ]);
 
-        Daily_variables::create([
+        $report = Daily_variables::create([
             'child_id' => $student->id,
             'teacher_id' => $teacher->id,
             'topic' => $request->topic,
@@ -207,6 +225,8 @@ class TeacherController extends Controller
             'notes' => $request->notes,
             'report_date' => $request->report_date,
         ]);
+
+        $student->mother->notify(new NewDailyReportNotification($report));
 
         return back()->with(
             'success',
@@ -279,9 +299,14 @@ class TeacherController extends Controller
             ->where('school_name', $teacher->school_name)
             ->first() ?? $teacher;
 
-        // جلب طلاب المعلم مع المتغيرات اليومية الخاصة بكل طالب
+        // Load only each student's latest report for the card preview.
         $students = $teacher->childrenAsTeacher()
-            ->with('dailyVariables')
+            ->withCount(['dailyVariables' => function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher->id);
+            }])
+            ->with(['latestDailyVariable' => function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher->id);
+            }])
             ->get();
 
         return view('teacher.daily_variables', compact(
@@ -289,6 +314,29 @@ class TeacherController extends Controller
             'students',
             'schoolBranding'
         ));
+    }
+
+    public function studentDailyReports(Request $request, $studentId)
+    {
+        $this->checkTeacher();
+
+        $teacher = auth()->user();
+        $student = $teacher->childrenAsTeacher()
+            ->where('chaldrins.id', $studentId)
+            ->firstOrFail();
+
+        $reports = Daily_variables::where('teacher_id', $teacher->id)
+            ->where('child_id', $student->id)
+            ->orderByDesc('report_date')
+            ->orderByDesc('id')
+            ->paginate(10);
+
+        return response()->json([
+            'html' => view('teacher.partials.daily_reports', compact('reports'))->render(),
+            'has_more' => $reports->hasMorePages(),
+            'next_page' => $reports->currentPage() + 1,
+            'total' => $reports->total(),
+        ]);
     }
 
     // 7. عرض صفحة إضافة طفل جديد
@@ -413,15 +461,6 @@ class TeacherController extends Controller
         $teacher = auth()->user();
 
         return view('teacher.profile', compact('teacher'));
-    }
-
-    // عرض صفحة تعديل بيانات المعلم
-    public function editProfile()
-    {
-        $this->checkTeacher();
-        $teacher = auth()->user();
-
-        return view('teacher.profile_edit', compact('teacher'));
     }
 
     // حفظ تعديلات بيانات المعلم

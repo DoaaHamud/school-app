@@ -3,35 +3,6 @@
 @section('content')
 
     <style>
-        .navbar-custom {
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-        }
-
-        .brand-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--primary-color);
-            color: #ffffff;
-            font-size: 20px;
-        }
-
-        .brand-title {
-            font-weight: 800;
-            font-size: 18px;
-            color: #1e293b;
-        }
-
-        .brand-subtitle {
-            font-size: 12px;
-            color: #64748b;
-        }
-
         .page-title {
             font-weight: 800;
             color: #1e293b;
@@ -61,24 +32,12 @@
             padding: 16px;
             border: 1px solid #e5e7eb;
             border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
             background: #fff;
         }
 
-        .student-card:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
-        }
-
-        .student-card.selected {
+        .student-card {
             border-color: var(--primary-color);
             background: color-mix(in srgb, var(--primary-color) 10%, white);
-        }
-
-        .student-checkbox {
-            display: none;
         }
 
         .student-info {
@@ -102,11 +61,6 @@
         .check-icon {
             color: var(--primary-color);
             font-size: 20px;
-            opacity: 0;
-        }
-
-        .student-card.selected .check-icon {
-            opacity: 1;
         }
 
         .filter-card {
@@ -125,22 +79,19 @@
         }
     </style>
 
-    {{-- Navbar --}}
-    <nav class="navbar navbar-custom">
+    <nav class="navbar navbar-expand-lg mb-4 shadow-sm" style="background-color: var(--primary-color);">
         <div class="container">
-            <div class="d-flex align-items-center gap-3">
-                <div class="brand-icon">
-                    <i class="bi bi-balloon-heart-fill"></i>
-                </div>
-                <div>
-                    <div class="brand-title">{{ auth()->user()->school_name ?? 'روضتي' }}</div>
-                    <div class="brand-subtitle">لوحة تحكم المدير</div>
-                </div>
-            </div>
-
-            <a href="{{ route('manager.teachers.index') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-right me-1"></i> دليل الأساتذة
+            <a class="navbar-brand text-white fw-bold" href="{{ route('manager.dashboard') }}">
+                {{ auth()->user()->school_name ?? 'المدرسة' }}
+                <span class="d-block small fw-normal">لوحة تحكم المدير</span>
             </a>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('manager.profile') }}" class="btn btn-sm text-white border border-light">الملف الشخصي</a>
+                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-light">تسجيل الخروج</button>
+                </form>
+            </div>
         </div>
     </nav>
 
@@ -258,53 +209,30 @@
 
             <div class="card-body">
                 @if($students->count() > 0)
-                <form method="POST" action="{{ route('manager.teachers.assign.store', $teacher->id) }}">
-                    @csrf
-
-                    {{-- السنة --}}
-                    <input type="hidden" name="year" value="{{ $year }}">
-
-                    {{-- الصف --}}
-                    <input type="hidden" name="class" value="{{ $selectedClass }}">
-
-                    <div class="row g-3">
-                        @foreach($students as $student)
-                        @php
-                        $isAssigned = $student->teachers->contains('id', $teacher->id);
-                        @endphp
-
-                        <div class="col-md-6 col-lg-4">
-                            <label class="student-card {{ $isAssigned ? 'selected' : '' }}">
-                                <input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="student-checkbox" {{ $isAssigned ? 'checked' : '' }}>
-
-                                <div class="student-info">
-                                    <div class="student-icon">
-                                        <i class="bi bi-person"></i>
-                                    </div>
-
-                                    <div>
-                                        <div class="fw-bold">
-                                            {{ $student->name }}
-                                        </div>
-                                        <small class="text-muted">
-                                            {{ $student->class }}
-                                        </small>
-                                    </div>
+                <div class="row g-3">
+                    @foreach($students as $student)
+                    <div class="col-md-6 col-lg-4">
+                        <div class="student-card">
+                            <div class="student-info">
+                                <div class="student-icon">
+                                    <i class="bi bi-person"></i>
                                 </div>
 
-                                <i class="bi bi-check-circle-fill check-icon"></i>
-                            </label>
-                        </div>
-                        @endforeach
-                    </div>
+                                <div>
+                                    <div class="fw-bold">
+                                        {{ $student->name }}
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ $student->class }}
+                                    </small>
+                                </div>
+                            </div>
 
-                    {{-- زر الحفظ --}}
-                    <div class="mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="bi bi-check2-circle me-1"></i> حفظ توزيع الطلاب
-                        </button>
+                            <i class="bi bi-check-circle-fill check-icon" aria-label="مسند للمعلم"></i>
+                        </div>
                     </div>
-                </form>
+                    @endforeach
+                </div>
                 @else
                 <div class="text-center py-5">
                     <i class="bi bi-people fs-1 text-muted"></i>
@@ -316,18 +244,5 @@
         </div>
 
     </div>
-
-    <script>
-        document.querySelectorAll('.student-checkbox').forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                const card = this.closest('.student-card');
-                if (this.checked) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            });
-        });
-    </script>
 
 @endsection

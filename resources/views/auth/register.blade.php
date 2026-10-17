@@ -308,8 +308,13 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="school_name">اسم المدرسة (اختياري للمدراء والأساتذة)</label>
-                    <input type="text" name="school_name" id="school_name" value="{{ old('school_name') }}" autocomplete="organization">
+                    <label for="school_name">اسم المدرسة (مطلوب للمعلمات، اختياري للمدراء)</label>
+                    <input type="text" name="school_name" id="school_name" list="approved-school-names" value="{{ old('school_name') }}" autocomplete="organization">
+                    <datalist id="approved-school-names">
+                        @foreach($schoolNames as $schoolName)
+                        <option value="{{ $schoolName }}">
+                        @endforeach
+                    </datalist>
                 </div>
 
                 <div class="form-field">
@@ -349,6 +354,18 @@
         </footer>
     </main>
     <script>
+        const roleInput = document.getElementById('role');
+        const schoolNameInput = document.getElementById('school_name');
+
+        const updateSchoolRequirement = () => {
+            const isTeacher = roleInput.value === 'teacher';
+            schoolNameInput.required = isTeacher;
+            schoolNameInput.setAttribute('aria-required', String(isTeacher));
+        };
+
+        roleInput.addEventListener('change', updateSchoolRequirement);
+        updateSchoolRequirement();
+
         document.querySelectorAll('.password-toggle').forEach((toggle) => {
             toggle.addEventListener('click', () => {
                 const passwordInput = toggle.parentElement.querySelector('input');

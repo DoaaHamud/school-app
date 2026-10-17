@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\chaldrin;
+use App\Notifications\TeacherAssignmentNotification;
 
 class ManagerController extends Controller
 {
@@ -22,6 +23,8 @@ class ManagerController extends Controller
     {
         $this->checkManager();
         $manager = auth()->user();
+        $managerNotifications = $manager->notifications()->latest()->take(5)->get();
+        $unreadNotificationsCount = $manager->unreadNotifications()->count();
 
         // طلبات المعلمين المعلقة
         $pendingTeachers = User::where('role', 'teacher')
@@ -30,12 +33,12 @@ class ManagerController extends Controller
             ->latest()
             ->get();
 
-        // المعلمون المقبولون
         $approvedTeachers = User::where('role', 'teacher')
             ->where('status', 'approved')
             ->where('school_name', $manager->school_name)
             ->latest()
             ->get();
+        $approvedTeachersCount = $approvedTeachers->count();
 
         $selectedYear = $request->get('year', date('Y'));
 
@@ -50,9 +53,25 @@ class ManagerController extends Controller
         return view('manager.dashboard', compact(
             'pendingTeachers',
             'approvedTeachers',
+            'approvedTeachersCount',
             'selectedYear',
-            'classes'
+            'classes',
+            'managerNotifications',
+            'unreadNotificationsCount'
         ));
+    }
+
+    public function openNotification(string $notificationId)
+    {
+        $this->checkManager();
+
+        $notification = auth()->user()->notifications()->findOrFail($notificationId);
+
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        return redirect()->route('manager.dashboard');
     }
 
     // دالة حفظ التعيين السريع من الداشبورد
@@ -66,20 +85,75 @@ class ManagerController extends Controller
             'class' => 'required|string',
         ]);
 
+        $manager = auth()->user();
         $teacher = User::where('role', 'teacher')
             ->where('status', 'approved')
+            ->where('school_name', $manager->school_name)
             ->findOrFail($request->teacher_id);
 
-        // جلب معرفات طلاب الصف المحدد
+        // جلب طلاب الصف المحدد التابعين لهذه المدرسة فقط
         $classStudentIds = chaldrin::whereYear('created_at', $request->year)
+            ->where('manager_id', $manager->id)
             ->where('class', $request->class)
             ->pluck('id');
 
+        if ($classStudentIds->isEmpty()) {
+            return back()
+                ->withInput()
+                ->withErrors(['class' => 'لا يوجد طلاب في الصف المحدد لهذه السنة الدراسية.']);
+        }
+
         // ربط المعلم بطلاب الصف
-        $teacher->childrenAsTeacher()->syncWithoutDetaching($classStudentIds);
+        $assignment = $teacher->childrenAsTeacher()->syncWithoutDetaching($classStudentIds);
+
+        if ($assignment['attached'] !== []) {
+            $teacher->notify(new TeacherAssignmentNotification(
+                $request->class,
+                count($assignment['attached'])
+            ));
+        }
 
         return back()->with('success', 'تم تعيين المعلم للصف بنجاح.');
     }
+
+    public function unassignClassQuickStore(Request $request)
+    {
+        $this->checkManager();
+
+        $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+            'year' => 'required|integer',
+            'class' => 'required|string',
+        ]);
+
+        $manager = auth()->user();
+        $teacher = User::where('role', 'teacher')
+            ->where('status', 'approved')
+            ->where('school_name', $manager->school_name)
+            ->findOrFail($request->teacher_id);
+
+        $classStudentIds = chaldrin::where('manager_id', $manager->id)
+            ->whereYear('created_at', $request->year)
+            ->where('class', $request->class)
+            ->whereHas('teachers', function ($query) use ($teacher) {
+                $query->where('users.id', $teacher->id);
+            })
+            ->pluck('chaldrins.id');
+
+        if ($classStudentIds->isEmpty()) {
+            return back()
+                ->withInput()
+                ->withErrors(['unassignment' => 'لا يوجد تعيين لهذا المعلم في الصف المحدد لهذه السنة الدراسية.']);
+        }
+
+        $teacher->childrenAsTeacher()->detach($classStudentIds->all());
+
+        return back()->with(
+            'success',
+            'تم إلغاء تعيين المعلم من الصف بنجاح، مع بقاء الطلاب والتقارير محفوظة.'
+        );
+    }
+
     // 2. الموافقة على طلب معلم
     public function approveTeacher($id)
     {
@@ -87,6 +161,8 @@ class ManagerController extends Controller
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'pending')
+            ->whereNotNull('school_name')
+            ->where('school_name', auth()->user()->school_name)
             ->findOrFail($id);
 
         $teacher->update([
@@ -106,6 +182,8 @@ class ManagerController extends Controller
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'pending')
+            ->whereNotNull('school_name')
+            ->where('school_name', auth()->user()->school_name)
             ->findOrFail($id);
 
         $teacher->delete();
@@ -114,6 +192,49 @@ class ManagerController extends Controller
             'success',
             'تم رفض حساب المعلم وحذفه.'
         );
+    }
+
+    public function deactivateTeacher($id)
+    {
+        $this->checkManager();
+
+        $teacher = User::where('role', 'teacher')
+            ->where('status', 'approved')
+            ->where('school_name', auth()->user()->school_name)
+            ->findOrFail($id);
+
+        $teacher->update(['status' => 'deactivated']);
+
+        return back()->with('success', 'تم إلغاء تفعيل حساب المعلم.');
+    }
+
+    public function deactivatedTeachers()
+    {
+        $this->checkManager();
+
+        $teachers = User::where('role', 'teacher')
+            ->where('status', 'deactivated')
+            ->where('school_name', auth()->user()->school_name)
+            ->latest()
+            ->get();
+
+        return view('manager.deactivated-teachers', compact('teachers'));
+    }
+
+    public function reactivateTeacher($id)
+    {
+        $this->checkManager();
+
+        $teacher = User::where('role', 'teacher')
+            ->where('status', 'deactivated')
+            ->where('school_name', auth()->user()->school_name)
+            ->findOrFail($id);
+
+        $teacher->update(['status' => 'approved']);
+
+        return redirect()
+            ->route('manager.teachers.deactivated')
+            ->with('success', 'تمت إعادة تفعيل حساب المعلم.');
     }
 
     // 3. عرض طلاب صف معين مع العلامات والمعدلات
@@ -174,13 +295,15 @@ class ManagerController extends Controller
         // الصف المحدد (افتراضياً أول صف مسند للمعلم)
         $selectedClass = $request->get('class', $classes->first());
 
-        // جلب طلاب الصف المحدد
+        // عرض طلاب الصف المحدد المسندين لهذا المعلم فقط
         $students = chaldrin::where('manager_id', $manager->id)
             ->whereYear('created_at', $year)
+            ->whereHas('teachers', function ($q) use ($teacherId) {
+                $q->where('users.id', $teacherId);
+            })
             ->when($selectedClass, function ($query) use ($selectedClass) {
                 $query->where('class', $selectedClass);
             })
-            ->with('teachers')
             ->get();
 
         return view('manager.assign_teacher', compact(
@@ -211,7 +334,14 @@ class ManagerController extends Controller
             ->pluck('id');
 
         // ربط المعلم بكل طلاب هذا الصف تلقائياً (سواء أنشأهم هو أو أستاذ آخر)
-        $teacher->childrenAsTeacher()->syncWithoutDetaching($classStudentIds);
+        $assignment = $teacher->childrenAsTeacher()->syncWithoutDetaching($classStudentIds);
+
+        if ($assignment['attached'] !== []) {
+            $teacher->notify(new TeacherAssignmentNotification(
+                $request->class,
+                count($assignment['attached'])
+            ));
+        }
 
         return redirect()
             ->route('manager.teachers.assign', [
@@ -231,6 +361,10 @@ class ManagerController extends Controller
         $manager = auth()->user();
         $year = $request->get('year', date('Y'));
         $search = $request->get('search'); // متغير البحث
+        $deactivatedTeachersCount = User::where('role', 'teacher')
+            ->where('status', 'deactivated')
+            ->where('school_name', $manager->school_name)
+            ->count();
 
         $teachers = User::where('role', 'teacher')
             ->where('status', 'approved')
@@ -248,18 +382,25 @@ class ManagerController extends Controller
             ])
             ->get();
 
-        return view('manager.teachers', compact('teachers', 'year', 'search'));
+        return view('manager.teachers', compact(
+            'teachers',
+            'year',
+            'search',
+            'deactivatedTeachersCount'
+        ));
     }
     public function studentsIndex(Request $request)
     {
         $this->checkManager();
-        $managerId = auth()->id(); // ID المدير المسجل دخوله
+        $managerId = auth()->id();
 
         $year = $request->get('year', date('Y'));
         $class = $request->get('class');
         $search = $request->get('search');
+        $deactivatedStudentsCount = chaldrin::onlyTrashed()
+            ->where('manager_id', $managerId)
+            ->count();
 
-        // تصفية الصفوف حسب manager_id الخاص بالمدير الحالي
         $classes = chaldrin::where('manager_id', $managerId)
             ->whereYear('created_at', $year)
             ->select('class')
@@ -267,7 +408,7 @@ class ManagerController extends Controller
             ->orderBy('class')
             ->pluck('class');
 
-        $students = chaldrin::where('manager_id', $managerId) // شرط العزل المهم جداً
+        $students = chaldrin::where('manager_id', $managerId)
             ->whereYear('created_at', $year)
             ->when($class, function ($query) use ($class) {
                 $query->where('class', $class);
@@ -322,15 +463,56 @@ class ManagerController extends Controller
             'year',
             'class',
             'search',
-            'groupedStudents'
+            'groupedStudents',
+            'deactivatedStudentsCount'
         ));
     }
+
+    public function deactivatedStudents(Request $request)
+    {
+        $this->checkManager();
+
+        $managerId = auth()->id();
+        $search = $request->get('search');
+        $students = chaldrin::onlyTrashed()
+            ->where('manager_id', $managerId)
+            ->when($search, function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })
+            ->latest('deleted_at')
+            ->get();
+
+        return view('manager.deactivated-students', compact('students', 'search'));
+    }
+
+    public function deactivateStudent($id)
+    {
+        $this->checkManager();
+
+        $student = chaldrin::where('manager_id', auth()->id())->findOrFail($id);
+        $student->delete();
+
+        return back()->with('success', 'تم إلغاء تفعيل الطالب مع الاحتفاظ ببياناته وتقاريره.');
+    }
+
+    public function reactivateStudent($id)
+    {
+        $this->checkManager();
+
+        $student = chaldrin::onlyTrashed()
+            ->where('manager_id', auth()->id())
+            ->findOrFail($id);
+        $student->restore();
+
+        return back()->with('success', 'تمت إعادة تفعيل الطالب.');
+    }
+
     // عرض ملف الطالب والمتغيرات اليومية الخاصة به
     public function studentProfile($id)
     {
         $this->checkManager();
 
-        $student = chaldrin::with([
+        $student = chaldrin::where('manager_id', auth()->id())->with([
             'dailyVariables',
             'teachers'
         ])->findOrFail($id);
@@ -354,18 +536,6 @@ class ManagerController extends Controller
 
         return view('manager.profile', compact('manager'));
     }
-
-
-    // صفحة تعديل بيانات المدير
-    public function editProfile()
-    {
-        $this->checkManager();
-
-        $manager = auth()->user();
-
-        return view('manager.profile-edit', compact('manager'));
-    }
-
 
     // حفظ تعديلات المدير
     public function updateProfile(Request $request)
@@ -416,19 +586,6 @@ class ManagerController extends Controller
         return redirect()
             ->route('login')
             ->with('success', 'تم حذف حساب المدير بنجاح.');
-    }
-
-    // حذف طالب
-    public function destroyStudent($id)
-    {
-        $this->checkManager();
-
-        $student = chaldrin::findOrFail($id);
-
-        // حذف الطالب
-        $student->delete();
-
-        return back()->with('success', 'تم حذف الطالب بنجاح.');
     }
 
     // عرض صفحة علامات الصف بالكامل للمدير

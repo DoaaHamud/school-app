@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class chaldrin extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'mother_id',
         'manager_id',
@@ -35,6 +38,11 @@ class chaldrin extends Model
     public function dailyVariables()
     {
         return $this->hasMany(Daily_variables::class, 'child_id');
+    }
+
+    public function latestDailyVariable()
+    {
+        return $this->hasOne(Daily_variables::class, 'child_id')->latestOfMany('report_date');
     }
 
     public function manager()

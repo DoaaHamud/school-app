@@ -49,12 +49,10 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------
     Route::prefix('manager')->name('manager.')->group(function () {
         Route::get('/dashboard', [ManagerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/notifications/{notificationId}', [ManagerController::class, 'openNotification'])->name('notifications.open');
         // حساب المدير
         Route::get('/profile', [ManagerController::class, 'profile'])
             ->name('profile');
-
-        Route::get('/profile/edit', [ManagerController::class, 'editProfile'])
-            ->name('profile.edit');
 
         Route::put('/profile', [ManagerController::class, 'updateProfile'])
             ->name('profile.update');
@@ -65,7 +63,12 @@ Route::middleware('auth')->group(function () {
         // موافقة ورفض معلم
         Route::patch('/teachers/{id}/approve', [ManagerController::class, 'approveTeacher'])->name('teachers.approve');
         Route::patch('/teachers/{id}/reject', [ManagerController::class, 'rejectTeacher'])->name('teachers.reject');
-        Route::post('/assign-class-quick', [ManagerController::class, 'assignClassQuickStore'])->name('assign.class.quick');        // استعراض طلاب صف معين
+        Route::patch('/teachers/{id}/deactivate', [ManagerController::class, 'deactivateTeacher'])->name('teachers.deactivate');
+        Route::get('/teachers/deactivated', [ManagerController::class, 'deactivatedTeachers'])->name('teachers.deactivated');
+        Route::patch('/teachers/{id}/reactivate', [ManagerController::class, 'reactivateTeacher'])->name('teachers.reactivate');
+        Route::post('/assign-class-quick', [ManagerController::class, 'assignClassQuickStore'])->name('assign.class.quick');
+        Route::delete('/unassign-class-quick', [ManagerController::class, 'unassignClassQuickStore'])->name('unassign.class.quick');
+        // استعراض طلاب صف معين
         Route::get('/classes/{className}/students', [ManagerController::class, 'showClassStudents'])->name('classes.students');
 
         // ربط معلم بطلاب/صفوف
@@ -74,6 +77,12 @@ Route::middleware('auth')->group(function () {
 
         // عرض قائمة المعلمين والصفوف المسندة لهم
         Route::get('/teachers', [ManagerController::class, 'teachersIndex'])->name('teachers.index');
+        Route::get('/students/deactivated', [ManagerController::class, 'deactivatedStudents'])
+            ->name('students.deactivated');
+        Route::patch('/students/{id}/deactivate', [ManagerController::class, 'deactivateStudent'])
+            ->name('students.deactivate');
+        Route::patch('/students/{id}/reactivate', [ManagerController::class, 'reactivateStudent'])
+            ->name('students.reactivate');
         Route::get('/students', [ManagerController::class, 'studentsIndex'])
             ->name('students');
         Route::get(
@@ -81,7 +90,6 @@ Route::middleware('auth')->group(function () {
             [ManagerController::class, 'studentProfile']
         )->name('students.profile');
 
-        Route::delete('/students/{id}', [ManagerController::class, 'destroyStudent'])->name('students.destroy');
         Route::get('/classes/{className}/grades', [ManagerController::class, 'showClassGrades'])->name('classes.grades');
         Route::get('/classes/{className}/notes', [ManagerController::class, 'showClassNotes'])->name('classes.notes');
         Route::put('/settings/update', [ManagerController::class, 'updateSettings'])->name('settings.update');
@@ -95,9 +103,9 @@ Route::middleware('auth')->group(function () {
 
         // لوحة تحكم المعلم
         Route::get('/teacher/dashboard', [TeacherController::class, 'dashboard'])->name('teacher.dashboard');
+        Route::get('/teacher/notifications/{notificationId}', [TeacherController::class, 'openNotification'])->name('teacher.notifications.open');
         // حساب المعلم (Profile, Edit, Update, Delete)
         Route::get('/teacher/profile', [TeacherController::class, 'profile'])->name('teacher.profile');
-        Route::get('/teacher/profile/edit', [TeacherController::class, 'editProfile'])->name('teacher.profile.edit');
         Route::put('/teacher/profile', [TeacherController::class, 'updateProfile'])->name('teacher.profile.update');
         Route::delete('/teacher/profile', [TeacherController::class, 'deleteAccount'])->name('teacher.profile.delete');
         Route::get('/teacher/classes/{class}/grades', [TeacherController::class, 'showGrades'])->name('teacher.classes.grades');
@@ -116,6 +124,8 @@ Route::middleware('auth')->group(function () {
 
         // المتغيرات اليومية
         Route::post('/teacher/students/{studentId}/daily-variable', [TeacherController::class, 'storeDailyVariable'])->name('teacher.daily_store');
+        Route::get('/teacher/students/{studentId}/daily-reports', [TeacherController::class, 'studentDailyReports'])
+            ->name('teacher.student.daily_reports');
         Route::put('/teacher/daily-variable/{id}', [TeacherController::class, 'updateDailyVariable'])->name('teacher.daily_update');
         Route::delete('/teacher/daily-variable/{id}', [TeacherController::class, 'deleteDailyVariable'])->name('teacher.daily_delete');
         Route::get('/teacher/daily-variables', [TeacherController::class, 'dailyVariables'])
@@ -130,9 +140,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('auth')->prefix('mother')->name('mother.')->group(function () {
         Route::get('/dashboard', [MotherController::class, 'dashboard'])->name('dashboard');
+        Route::get('/notifications/{notificationId}', [MotherController::class, 'openNotification'])->name('notifications.open');
         Route::get('/child/{id}', [MotherController::class, 'showChild'])->name('child_details');
+        Route::post('/child/{childId}/notes', [MotherController::class, 'storeChildNote'])->name('child_notes.store');
         Route::get('/profile', [MotherController::class, 'profile'])->name('profile');
-        Route::get('/profile/edit', [MotherController::class, 'editProfile'])->name('profile.edit');
         Route::put('/profile/update', [MotherController::class, 'updateProfile'])->name('profile.update');
         Route::delete('/profile/delete', [MotherController::class, 'deleteAccount'])->name('profile.delete');
     });

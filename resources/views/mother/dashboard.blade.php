@@ -25,6 +25,20 @@
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
         }
 
+        .mother-notifications-menu {
+            width: min(340px, calc(100vw - 30px));
+            padding: 8px;
+        }
+
+        .mother-notification-item {
+            white-space: normal;
+            border-radius: 8px;
+        }
+
+        .mother-notification-message {
+            white-space: normal;
+        }
+
         .navbar-brand {
             font-size: 22px;
             font-weight: 700;
@@ -282,7 +296,8 @@
             font-weight: 500;
         }
 
-        .details-btn {
+        .details-btn,
+        .send-note-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -300,7 +315,12 @@
             transition: filter 0.2s ease, transform 0.2s ease;
         }
 
-        .details-btn:hover {
+        .send-note-btn {
+            cursor: pointer;
+        }
+
+        .details-btn:hover,
+        .send-note-btn:hover {
             filter: brightness(0.9);
             color: white;
             transform: translateY(-1px);
@@ -436,19 +456,15 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
-            <!-- حاوية الشعار -->
-            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
-                <img src="{{ asset('images/logo.jpeg') }}"
-                    alt="شعار روضتي"
-                    style="width: 100%; height: 100%; object-fit: contain;">
+            <!-- أيقونة محايدة للوحة الأم -->
+            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
             </div>
 
-            <!-- النصوص بجانب الشعار -->
+            <!-- اسم لوحة الأم -->
             <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-                <span style="font-size: 18px; font-weight: 800; color: #2563eb; line-height: 1.2;">روضتي</span>
-                <span style="font-size: 12px; color: #64748b; margin-top: 2px; font-weight: 500;">لوحة الأم</span>
+                <span style="font-size: 18px; font-weight: 800; color: #334155; line-height: 1.2;">لوحة الأم</span>
             </div>
-            </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#motherNavbar">
                 <span class="navbar-toggler-icon"></span>
@@ -462,6 +478,39 @@
                         </a>
                     </li>
                 </ul>
+
+                <div class="dropdown me-lg-3">
+                    <button class="btn position-relative d-flex align-items-center gap-2 text-secondary"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="الإشعارات">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="d-lg-none">الإشعارات</span>
+                        @if($unreadNotificationsCount > 0)
+                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                        @endif
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end mother-dropdown mother-notifications-menu">
+                        <li class="dropdown-header fw-bold">الإشعارات</li>
+                        @forelse($motherNotifications as $notification)
+                        <li>
+                            <a class="dropdown-item mother-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
+                                href="{{ route('mother.notifications.open', $notification->id) }}">
+                                <span class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-file-earmark-text text-primary mt-1"></i>
+                                    <span>
+                                        <span class="d-block fw-semibold">{{ $notification->data['child_name'] ?? 'طفلكِ' }}</span>
+                                        <span class="mother-notification-message d-block small text-muted">{{ $notification->data['message'] ?? 'تمت إضافة تقرير جديد.' }}</span>
+                                        <small class="text-secondary">{{ $notification->created_at->diffForHumans() }}</small>
+                                    </span>
+                                </span>
+                            </a>
+                        </li>
+                        @empty
+                        <li class="px-3 py-2 small text-muted">لا توجد إشعارات حتى الآن.</li>
+                        @endforelse
+                    </ul>
+                </div>
 
                 <!-- قائمة حساب الأم (الملف الشخصي، التعديل، والحذف) -->
                 <div class="dropdown mother-account">
@@ -489,11 +538,6 @@
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('mother.profile') }}">
                                 <i class="bi bi-person-circle me-1 text-primary"></i> الملف الشخصي
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('mother.profile.edit') }}">
-                                <i class="bi bi-pencil-square me-1 text-warning"></i> تعديل البيانات
                             </a>
                         </li>
                         <li>
@@ -528,6 +572,30 @@
                 يمكنكِ متابعة أطفالكِ والاطلاع على تقاريرهم اليومية.
             </p>
         </div>
+
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill ms-1"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-circle-fill ms-1"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+        </div>
+        @endif
+
+        @if($errors->any())
+        <div class="alert alert-danger shadow-sm" role="alert">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
 
         <h3 class="children-title">
             <i class="bi bi-people"></i>
@@ -636,6 +704,34 @@
                 لا يوجد تقرير يومي لهذا الطفل حتى الآن.
             </div>
             @endif
+
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="fw-bold text-dark mb-2">
+                    <i class="bi bi-chat-left-text ms-1" style="color: var(--school-color);"></i>
+                    إرسال ملاحظة للمعلمين
+                </h6>
+                @if($child->teachers->isNotEmpty())
+                <p class="small text-muted mb-2">
+                    ستصل الملاحظة إلى:
+                    {{ $child->teachers->pluck('name')->join('، ') }}
+                </p>
+                <form action="{{ route('mother.child_notes.store', $child->id) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="note_child_id" value="{{ $child->id }}">
+                    <label for="childNote{{ $child->id }}" class="visually-hidden">ملاحظة عن {{ $child->name }}</label>
+                    <textarea id="childNote{{ $child->id }}" name="note" class="form-control mb-2"
+                        rows="3" maxlength="2000" placeholder="اكتبي ملاحظة أو رسالة للمعلمين المسؤولين..." required>{{ old('note_child_id') == $child->id ? old('note') : '' }}</textarea>
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                        <small class="text-muted">حد أقصى 2000 حرف</small>
+                        <button type="submit" class="send-note-btn">
+                            <i class="bi bi-send ms-1"></i> إرسال الملاحظة
+                        </button>
+                    </div>
+                </form>
+                @else
+                <p class="small text-muted mb-0">لا يوجد معلمون معينون لهذا الطفل حاليًا، لذلك لا يمكن إرسال ملاحظة.</p>
+                @endif
+            </div>
         </div>
         @empty
         <div class="empty-box">

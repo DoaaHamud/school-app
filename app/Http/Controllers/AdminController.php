@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class AdminController extends Controller
 {
     // عرض لوحة تحكم الأدمن (الطلبات المعلقة + المفعلون + عداد غير المفعلين)
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $this->checkAdmin();
 
@@ -17,16 +17,29 @@ class AdminController extends Controller
             ->latest()
             ->get();
 
-        $approvedManagers = User::where('role', 'manager')
+        $approvedManagersQuery = User::where('role', 'manager')
             ->where('status', 'approved')
-            ->latest()
-            ->get();
+            ->latest();
+        $approvedManagerCount = (clone $approvedManagersQuery)->count();
+        $managerSearch = $request->input('manager_search');
+
+        if (is_string($managerSearch) && trim($managerSearch) !== '') {
+            $approvedManagersQuery->where('name', 'like', '%' . trim($managerSearch) . '%');
+        }
+
+        $approvedManagers = $approvedManagersQuery->get();
 
         $deactivatedCount = User::where('role', 'manager')
             ->where('status', 'deactivated')
             ->count();
 
-        return view('admin.dashboard', compact('pendingManagers', 'approvedManagers', 'deactivatedCount'));
+        return view('admin.dashboard', compact(
+            'pendingManagers',
+            'approvedManagers',
+            'approvedManagerCount',
+            'managerSearch',
+            'deactivatedCount'
+        ));
     }
 
     // الموافقة على طلب مدير

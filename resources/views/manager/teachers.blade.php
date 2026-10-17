@@ -60,6 +60,19 @@
         color: var(--primary-color);
     }
 
+    .btn-deactivate {
+        background-color: color-mix(in srgb, var(--primary-color) 16%, white);
+        border-color: color-mix(in srgb, var(--primary-color) 35%, white);
+        color: var(--primary-color);
+    }
+
+    .btn-deactivate:hover,
+    .btn-deactivate:focus {
+        background-color: color-mix(in srgb, var(--primary-color) 26%, white);
+        border-color: color-mix(in srgb, var(--primary-color) 45%, white);
+        color: var(--primary-color);
+    }
+
     .page-heading {
         color: #1f2937;
     }
@@ -203,28 +216,6 @@
 
                         <li>
 
-                            <a class="dropdown-item rounded-2 py-2" href="{{ route('manager.profile.edit') }}">
-
-                                <i class="bi bi-pencil-square ms-1"></i> تعديل البيانات
-
-                            </a>
-
-                        </li>
-
-                        <li>
-
-                            <hr class="dropdown-divider my-2">
-
-                        </li>
-
-                        <li>
-
-                            <button type="button" class="dropdown-item rounded-2 py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteManagerModal">
-
-                                <i class="bi bi-trash ms-1"></i> حذف الحساب
-
-                            </button>
-
                         </li>
 
                     </ul>
@@ -269,9 +260,17 @@
 
     @endif
 
-    <h1 class="h3 fw-bold mb-1" style="color: #1f2937;">دليل الأساتذة</h1>
-
-    <p class="text-muted small mb-4">عرض المعلمين المقبولين والطلاب والصفوف المسندة إليها</p>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1" style="color: #1f2937;">دليل الأساتذة</h1>
+            <p class="text-muted small mb-0">عرض المعلمين المقبولين والطلاب والصفوف المسندة إليها</p>
+        </div>
+        <a href="{{ route('manager.teachers.deactivated') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-person-x ms-1"></i>
+            المعلمون غير المفعلين
+            <span class="badge bg-secondary ms-1">{{ $deactivatedTeachersCount }}</span>
+        </a>
+    </div>
 
     <!-- Filter & Search Card -->
 
@@ -413,63 +412,19 @@
 
                 <a href="{{ route('manager.teachers.assign', ['teacher' => $teacher->id, 'year' => $year ?? date('Y')]) }}" class="btn btn-primary btn-sm px-3 py-2 fw-bold" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important;">
 
-                    <i class="bi bi-person-plus-fill ms-1"></i> توزيع الطلاب
+                    <i class="bi bi-people-fill ms-1"></i> عرض الطلاب
 
                 </a>
 
-                <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#deleteTeacherModal{{ $teacher->id }}">
-
-                    <i class="bi bi-trash ms-1"></i> حذف الأستاذ
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Delete Teacher Modal -->
-
-    <div class="modal fade" id="deleteTeacherModal{{ $teacher->id }}" tabindex="-1" aria-hidden="true">
-
-        <div class="modal-dialog modal-dialog-centered">
-
-            <div class="modal-content border-0 shadow rounded-4">
-
-                <div class="modal-header bg-danger text-white">
-
-                    <h5 class="modal-title fs-6"><i class="bi bi-exclamation-triangle-fill ms-1"></i> حذف المعلم</h5>
-
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-
-                </div>
-
-                <div class="modal-body text-center py-4">
-
-                    <i class="bi bi-trash3-fill text-danger display-4 mb-3 d-block"></i>
-
-                    <h5 class="mb-2 fw-bold text-dark">هل أنت متأكد من حذف المعلم ({{ $teacher->name }})؟</h5>
-
-                    <p class="text-muted small mb-0">سيتم حذف حساب المعلم نهائيًا من الروضة.</p>
-
-                </div>
-
-                <div class="modal-footer justify-content-center border-0 bg-light">
-
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
-
-                    <form action="{{ route('manager.teachers.reject', $teacher->id) }}" method="POST" class="d-inline">
-
-                        @csrf
-
-                        @method('DELETE')
-
-                        <button type="submit" class="btn btn-danger px-4">نعم، حذف</button>
-
-                    </form>
-
-                </div>
+                <form action="{{ route('manager.teachers.deactivate', $teacher->id) }}"
+                    method="POST" class="d-inline"
+                    onsubmit="return confirm('هل أنت متأكد من إلغاء تفعيل حساب هذا المعلم؟')">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn btn-deactivate btn-sm px-3 py-2 fw-bold">
+                        <i class="bi bi-person-x ms-1"></i> إلغاء التفعيل
+                    </button>
+                </form>
 
             </div>
 

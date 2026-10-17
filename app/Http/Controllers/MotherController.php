@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\chaldrin;
+use App\Notifications\MotherChildNoteNotification;
+use Illuminate\Http\Request;
 
 class MotherController extends Controller
 {
@@ -14,13 +16,75 @@ class MotherController extends Controller
         $children = chaldrin::where('mother_id', $mother->id)
             ->with([
                 'manager:id,school_name,school_logo,primary_color',
+                'teachers:id,name,status',
                 'dailyVariables' => function ($query) {
                     $query->latest();
                 },
             ])
             ->get();
 
-        return view('mother.dashboard', compact('mother', 'children'));
+        $motherNotifications = $mother->notifications()->latest()->take(5)->get();
+        $unreadNotificationsCount = $mother->unreadNotifications()->count();
+
+        return view('mother.dashboard', compact(
+            'mother',
+            'children',
+            'motherNotifications',
+            'unreadNotificationsCount'
+        ));
+    }
+
+    public function storeChildNote(Request $request, $childId)
+    {
+        $this->checkMother();
+
+        $validated = $request->validate([
+            'note' => 'required|string|max:2000',
+        ]);
+
+        $mother = auth()->user();
+        $child = chaldrin::where('mother_id', $mother->id)
+            ->with('teachers')
+            ->findOrFail($childId);
+        $teachers = $child->teachers;
+
+        if ($teachers->isEmpty()) {
+            return back()
+                ->withInput()
+                ->withErrors(['note' => "لا يوجد معلمون معينون للطفل {$child->name} لإرسال الملاحظة إليهم."]);
+        }
+
+        foreach ($teachers as $teacher) {
+            $teacher->notify(new MotherChildNoteNotification(
+                $child,
+                $mother,
+                $validated['note']
+            ));
+        }
+
+        return back()->with('success', "تم إرسال الملاحظة إلى جميع المعلمين المسؤولين عن {$child->name}.");
+    }
+
+    public function openNotification(string $notificationId)
+    {
+        $this->checkMother();
+
+        $mother = auth()->user();
+        $notification = $mother->notifications()->findOrFail($notificationId);
+        $childId = $notification->data['child_id'] ?? null;
+
+        if (!is_numeric($childId)) {
+            abort(404);
+        }
+
+        $child = chaldrin::where('mother_id', $mother->id)
+            ->findOrFail((int) $childId);
+
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        return redirect()->route('mother.child_details', $child->id);
     }
 
     /**
@@ -59,15 +123,6 @@ class MotherController extends Controller
         $mother = auth()->user();
 
         return view('mother.profile', compact('mother'));
-    }
-
-    // صفحة تعديل بيانات الأم
-    public function editProfile()
-    {
-        $this->checkMother();
-        $mother = auth()->user();
-
-        return view('mother.profile-edit', compact('mother'));
     }
 
     // حفظ تعديلات بيانات الأم

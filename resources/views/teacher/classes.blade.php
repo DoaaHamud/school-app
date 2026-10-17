@@ -314,19 +314,6 @@
                                 <i class="bi bi-person-circle me-2"></i> الملف الشخصي
                             </a>
                         </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('teacher.profile.edit') }}">
-                                <i class="bi bi-pencil-square me-2"></i> تعديل البيانات
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteTeacherModal">
-                                <i class="bi bi-trash me-2"></i> حذف الحساب
-                            </button>
-                        </li>
                     </ul>
                 </div>
 
@@ -543,37 +530,5 @@
         @endif
 
     </main>
-
-    <!-- Modal تحذير حذف الحساب -->
-    <div class="modal fade" id="deleteTeacherModal" tabindex="-1" aria-labelledby="deleteTeacherModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fs-6" id="deleteTeacherModalLabel">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> تحذير: حذف الحساب
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-                </div>
-                <div class="modal-body text-center py-4">
-                    <i class="bi bi-trash3-fill text-danger display-4 mb-3 d-block"></i>
-                    <h6 class="fw-bold text-dark mb-2">هل أنت متأكد من حذف حسابك؟</h6>
-                    <p class="text-muted small mb-0">
-                        سيتم حذف حساب المعلم نهائياً ولا يمكن التراجع عن هذه العملية.
-                    </p>
-                </div>
-                <div class="modal-footer bg-light justify-content-center border-0">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
-
-                    <form action="{{ route('teacher.profile.delete') }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger px-4">
-                            <i class="bi bi-trash3 me-1"></i> نعم، احذف الحساب
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
 @endsection

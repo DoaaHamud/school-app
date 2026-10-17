@@ -72,19 +72,6 @@
                                 <i class="bi bi-person-circle ms-1"></i> الملف الشخصي
                             </a>
                         </li>
-                        <li>
-                            <a class="dropdown-item rounded-2 py-2" href="{{ route('manager.profile.edit') }}">
-                                <i class="bi bi-pencil-square ms-1"></i> تعديل البيانات
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider my-2">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item rounded-2 py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteManagerModal">
-                                <i class="bi bi-trash ms-1"></i> حذف الحساب
-                            </button>
-                        </li>
                     </ul>
                 </div>
 
@@ -102,6 +89,23 @@
 
 <!-- Content -->
 <div class="container my-5" style="max-width: 750px;">
+
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+    </div>
+    @endif
+
+    @if($errors->any())
+    <div class="alert alert-danger shadow-sm" role="alert">
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
 
@@ -121,52 +125,94 @@
             </div>
         </div>
 
-        <!-- الاسم -->
-        <div class="p-3 bg-light rounded-3 mb-3">
-            <span class="d-block text-muted small mb-1">
-                الاسم
-            </span>
-            <span class="fw-bold text-dark fs-6">
-                {{ $manager->name }}
-            </span>
+        <div class="card border-0 bg-light rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-person-vcard ms-2" style="color: var(--primary-color);"></i>
+                    المعلومات الشخصية
+                </h5>
+                <p class="text-muted small mb-4">يمكنك تعديل معلوماتك مباشرة من هذه الصفحة.</p>
+
+                <form action="{{ route('manager.profile.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="mb-3">
+                        <label for="manager_name" class="form-label fw-semibold">الاسم</label>
+                        <input id="manager_name" type="text" name="name" class="form-control"
+                            value="{{ old('name', $manager->name) }}" maxlength="255" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="manager_email" class="form-label fw-semibold">البريد الإلكتروني</label>
+                        <input id="manager_email" type="email" name="email" class="form-control"
+                            value="{{ old('email', $manager->email) }}" maxlength="255" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="manager_phone" class="form-label fw-semibold">رقم الهاتف</label>
+                        <input id="manager_phone" type="text" name="phone" class="form-control"
+                            value="{{ old('phone', $manager->phone ?? '') }}" maxlength="20">
+                    </div>
+
+                    <button type="submit" class="btn text-white fw-bold px-4 py-2"
+                        style="background-color: var(--primary-color); border-color: var(--primary-color); border-radius: 9px;">
+                        <i class="bi bi-save ms-1"></i> حفظ المعلومات الشخصية
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <!-- البريد -->
-        <div class="p-3 bg-light rounded-3 mb-3">
-            <span class="d-block text-muted small mb-1">
-                البريد الإلكتروني
-            </span>
-            <span class="fw-bold text-dark fs-6">
-                {{ $manager->email }}
-            </span>
-        </div>
+        <div class="card border-0 bg-light rounded-4 mt-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-palette-fill ms-2" style="color: var(--primary-color);"></i>
+                    تخصيص الهوية البصرية
+                </h5>
+                <p class="text-muted small mb-4">عدّلي اسم المدرسة وشعارها ولون واجهة التطبيق.</p>
 
-        <!-- رقم الهاتف -->
-        <div class="p-3 bg-light rounded-3 mb-3">
-            <span class="d-block text-muted small mb-1">
-                رقم الهاتف
-            </span>
-            <span class="fw-bold text-dark fs-6">
-                {{ $manager->phone ?? 'غير مضاف' }}
-            </span>
-        </div>
+                <form action="{{ route('manager.settings.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
 
-        <!-- الدور -->
-        <div class="p-3 bg-light rounded-3 mb-3">
-            <span class="d-block text-muted small mb-1">
-                الدور
-            </span>
-            <span class="fw-bold text-dark fs-6">
-                مدير
-            </span>
+                    <div class="mb-3">
+                        <label for="school_name" class="form-label fw-semibold">اسم المدرسة / الروضة</label>
+                        <input id="school_name" type="text" name="school_name" class="form-control"
+                            value="{{ old('school_name', $manager->school_name ?? 'روضتي') }}" maxlength="255" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="primary_color" class="form-label fw-semibold">لون التطبيق</label>
+                        <input id="primary_color" type="color" name="primary_color"
+                            class="form-control form-control-color"
+                            value="{{ old('primary_color', $manager->primary_color ?? '#2563eb') }}" required>
+                    </div>
+
+                    @if($manager->school_logo)
+                    <div class="mb-3">
+                        <span class="form-label d-block">الشعار الحالي</span>
+                        <img src="{{ asset('storage/' . $manager->school_logo) }}" alt="شعار المدرسة الحالي"
+                            class="bg-white border rounded p-2" style="width: 90px; height: 90px; object-fit: contain;">
+                    </div>
+                    @endif
+
+                    <div class="mb-4">
+                        <label for="school_logo" class="form-label fw-semibold">شعار المدرسة</label>
+                        <input id="school_logo" type="file" name="school_logo" class="form-control"
+                            accept=".jpg,.jpeg,.png,.svg">
+                        <small class="text-muted">يمكنكِ رفع صورة بصيغة JPG أو PNG أو SVG، بحجم أقصى 2 ميغابايت.</small>
+                    </div>
+
+                    <button type="submit" class="btn text-white fw-bold px-4 py-2"
+                        style="background-color: var(--primary-color); border-color: var(--primary-color); border-radius: 9px;">
+                        <i class="bi bi-save ms-1"></i> حفظ الهوية
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- الأزرار -->
         <div class="d-flex gap-2 mt-4 pt-2">
-            <a href="{{ route('manager.profile.edit') }}" class="btn text-white fw-bold px-4 py-2" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; border-radius: 9px;">
-                <i class="bi bi-pencil-square ms-1"></i> تعديل البيانات
-            </a>
-
             <a href="{{ route('manager.dashboard') }}" class="btn btn-light border fw-semibold px-4 py-2" style="border-radius: 9px; color: #334155;">
                 العودة للوحة التحكم
             </a>

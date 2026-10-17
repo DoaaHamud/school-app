@@ -52,6 +52,15 @@
             color: #1f2937;
         }
 
+        form[action$="/logout"] button[type="submit"],
+        form[action$="/logout"] button[type="submit"]:hover,
+        form[action$="/logout"] button[type="submit"]:focus,
+        form[action$="/logout"] button[type="submit"]:active {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+            color: #334155 !important;
+        }
+
         /* تخصيص الروابط والأيقونات والعناصر لتأخذ اللون الأساسي تلقائياً */
         .text-primary-custom {
             color: var(--primary-color) !important;

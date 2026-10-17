@@ -63,6 +63,29 @@
             box-shadow: 0 8px 25px rgba(15, 23, 42, 0.10);
         }
 
+        .teacher-notifications-menu {
+            width: min(340px, calc(100vw - 30px));
+            padding: 8px;
+        }
+
+        .teacher-notification-item {
+            white-space: normal;
+            border-radius: 8px;
+        }
+
+        .teacher-notification-btn {
+            position: relative;
+            border: 0;
+            background: transparent;
+            color: #ffffff;
+            padding: 8px 12px;
+        }
+
+        .teacher-notification-btn:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.16);
+        }
+
         .teacher-dropdown .dropdown-header {
             background-color: var(--primary-color);
             border-radius: 0.375rem;
@@ -256,6 +279,40 @@
                     </li>
                 </ul>
 
+                <div class="dropdown me-lg-3">
+                    <button class="teacher-notification-btn rounded-2" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="الإشعارات">
+                        <i class="bi bi-bell fs-5"></i>
+                        @if($unreadNotificationsCount > 0)
+                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                        @endif
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown teacher-notifications-menu">
+                        <li class="dropdown-header fw-bold">الإشعارات</li>
+                        @forelse($teacherNotifications as $notification)
+                        <li>
+                            <a class="dropdown-item teacher-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
+                                href="{{ route('teacher.notifications.open', $notification->id) }}">
+                                <span class="d-flex align-items-start gap-2">
+                                    <i class="bi {{ ($notification->data['type'] ?? '') === 'mother_child_note' ? 'bi-chat-left-text-fill' : 'bi-person-plus-fill' }} text-primary mt-1"></i>
+                                    <span>
+                                        <span class="d-block">{{ $notification->data['message'] ?? 'تم إسناد طلاب جدد إليكِ.' }}</span>
+                                        @if(($notification->data['type'] ?? '') === 'mother_child_note')
+                                        <span class="d-block small mt-1 text-wrap">{{ $notification->data['note'] ?? '' }}</span>
+                                        @endif
+                                        <small class="text-secondary">{{ $notification->created_at->diffForHumans() }}</small>
+                                    </span>
+                                </span>
+                            </a>
+                        </li>
+                        @empty
+                        <li class="px-3 py-2 small text-muted">لا توجد إشعارات حتى الآن.</li>
+                        @endforelse
+                    </ul>
+                </div>
+
                 <!-- قائمة حساب المعلم -->
                 <div class="dropdown me-3">
                     <button class="teacher-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -283,19 +340,6 @@
                             <a class="dropdown-item py-2" href="{{ route('teacher.profile') }}">
                                 <i class="bi bi-person-circle me-2"></i> الملف الشخصي
                             </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('teacher.profile.edit') }}">
-                                <i class="bi bi-pencil-square me-2 text-warning"></i> تعديل البيانات
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteTeacherModal">
-                                <i class="bi bi-trash me-2"></i> حذف الحساب
-                            </button>
                         </li>
                     </ul>
                 </div>
@@ -397,37 +441,5 @@
             @endif
         </div>
     </main>
-
-    <!-- Modal تحذير حذف الحساب -->
-    <div class="modal fade" id="deleteTeacherModal" tabindex="-1" aria-labelledby="deleteTeacherModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fs-6" id="deleteTeacherModalLabel">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> تحذير: حذف الحساب
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-                </div>
-                <div class="modal-body text-center py-4">
-                    <i class="bi bi-trash3-fill text-danger display-4 mb-3 d-block"></i>
-                    <h6 class="fw-bold text-dark mb-2">هل أنت متأكد من حذف حسابك؟</h6>
-                    <p class="text-muted small mb-0">
-                        سيتم حذف حساب المعلم نهائياً ولا يمكن التراجع عن هذه العملية.
-                    </p>
-                </div>
-                <div class="modal-footer bg-light justify-content-center border-0">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
-
-                    <form action="{{ route('teacher.profile.delete') }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger px-4">
-                            <i class="bi bi-trash3 me-1"></i> نعم، احذف الحساب
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
 @endsection
