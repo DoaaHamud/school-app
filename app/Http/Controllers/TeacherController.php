@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\chaldrin;
 use App\Models\Daily_variables;
+use App\Models\MotherChildNote;
+use App\Notifications\MotherChildNoteReplyNotification;
 use App\Notifications\NewDailyReportNotification;
 use Illuminate\Http\Request;
 
@@ -43,9 +45,6 @@ class TeacherController extends Controller
             ->get();
 
         $latestDailyVariable = $dailyVariables->first();
-        $teacherNotifications = $teacher->notifications()->latest()->take(5)->get();
-        $unreadNotificationsCount = $teacher->unreadNotifications()->count();
-
         // 2. عدد الطلاب المسجلين
         $studentsCount = $students->count();
 
@@ -58,9 +57,7 @@ class TeacherController extends Controller
             'studentsCount',
             'latestDailyVariable',
             'classes',
-            'schoolBranding',
-            'teacherNotifications',
-            'unreadNotificationsCount'
+            'schoolBranding'
         ));
     }
 
@@ -74,7 +71,43 @@ class TeacherController extends Controller
             $notification->markAsRead();
         }
 
+        if (($notification->data['type'] ?? null) === 'mother_child_note') {
+            return redirect()->route('teacher.mother_notes');
+        }
+
         return redirect()->route('teacher.classes');
+    }
+
+    public function motherNotes()
+    {
+        $this->checkTeacher();
+
+        $childNotes = MotherChildNote::where('teacher_id', auth()->id())
+            ->with(['child:id,name,class', 'mother:id,name'])
+            ->latest()
+            ->get();
+
+        return view('teacher.mother_notes', compact('childNotes'));
+    }
+
+    public function replyToMotherNote(Request $request, $noteId)
+    {
+        $this->checkTeacher();
+
+        $validated = $request->validate([
+            'reply' => 'required|string|max:2000',
+        ]);
+
+        $childNote = MotherChildNote::where('teacher_id', auth()->id())
+            ->with(['child', 'teacher'])
+            ->findOrFail($noteId);
+        $childNote->update([
+            'reply' => $validated['reply'],
+            'replied_at' => now(),
+        ]);
+        $childNote->mother->notify(new MotherChildNoteReplyNotification($childNote));
+
+        return back()->with('success', 'تم إرسال الرد إلى وليّة الأمر.');
     }
 
     // // 2. عرض طلاب المعلم
@@ -117,11 +150,14 @@ class TeacherController extends Controller
         $searchClass = $request->input('search_class');
         $searchDate = $request->input('search_date');
 
-        $query = $teacher->childrenAsTeacher()->with(['dailyVariables' => function ($q) use ($searchDate) {
-            if (!empty($searchDate)) {
-                $q->whereDate('report_date', $searchDate);
-            }
-        }]);
+        $query = $teacher->childrenAsTeacher()->with([
+            'mother:id,name',
+            'dailyVariables' => function ($q) use ($searchDate) {
+                if (!empty($searchDate)) {
+                    $q->whereDate('report_date', $searchDate);
+                }
+            },
+        ]);
 
         if (!empty($searchName)) {
             $query->where('name', 'like', '%' . $searchName . '%');

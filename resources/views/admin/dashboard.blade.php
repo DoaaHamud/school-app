@@ -40,18 +40,10 @@
             box-shadow: 0 5px 12px rgba(37, 99, 235, 0.20);
         }
 
-        .brand-name {
-            font-size: 18px;
-            font-weight: 800;
-            color: #2563eb;
-            line-height: 1.2;
-        }
-
         .dashboard-name {
-            font-size: 12px;
+            font-size: 16px;
             color: #64748b;
-            margin-top: 2px;
-            font-weight: 500;
+            font-weight: 700;
         }
 
         .admin-info {
@@ -169,7 +161,6 @@
                     <i class="bi bi-shield-lock-fill"></i>
                 </div>
                 <div>
-                    <div class="brand-name">روضتي</div>
                     <div class="dashboard-name">لوحة تحكم الأدمن</div>
                 </div>
             </div>

@@ -189,6 +189,7 @@
                         <th>العمر</th>
                         <th>الحالة الصحية</th>
                         <th>المعدل العام للطالب</th>
+                        <th>ولي الأمر</th>
                         <th>المتغيرات اليومية</th>
                         <th>الإجراءات</th>
                     </tr>
@@ -225,6 +226,7 @@
                             <span class="text-muted small">لا توجد علامات</span>
                             @endif
                         </td>
+                        <td>{{ $student->mother?->name ?? '-' }}</td>
                         <td>
                             @if($student->dailyVariables->isNotEmpty())
                             <a href="{{ route('manager.students.profile', $student->id) }}" class="btn btn-sm text-white px-3 py-1 fw-bold" style="font-size: 12px; border-radius: 20px; background-color: var(--primary-color) !important;">

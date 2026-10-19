@@ -85,6 +85,18 @@
             color: var(--school-color);
         }
 
+        .child-notes-link {
+            color: var(--school-color);
+            border-color: var(--school-color);
+        }
+
+        .child-notes-link:hover,
+        .child-notes-link:focus {
+            color: #fff;
+            background-color: var(--school-color);
+            border-color: var(--school-color);
+        }
+
         .mother-account {
             display: inline-flex;
             align-items: center;
@@ -125,6 +137,20 @@
             color: #94a3b8;
             font-size: 10px;
             margin-top: 2px;
+        }
+
+        .mother-notifications-menu {
+            width: min(340px, calc(100vw - 30px));
+            padding: 8px;
+        }
+
+        .mother-notification-item,
+        .mother-notification-message {
+            white-space: normal;
+        }
+
+        .mother-notification-item {
+            border-radius: 8px;
         }
 
         .logout-btn {
@@ -428,6 +454,39 @@
 
                 </ul>
 
+                <div class="dropdown me-lg-3">
+                    <button class="btn position-relative d-flex align-items-center gap-2 text-secondary"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="الإشعارات">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="d-lg-none">الإشعارات</span>
+                        @if($unreadNotificationsCount > 0)
+                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                        @endif
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end mother-notifications-menu">
+                        <li class="dropdown-header fw-bold">الإشعارات</li>
+                        @forelse($motherNotifications as $notification)
+                        <li>
+                            <a class="dropdown-item mother-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
+                                href="{{ route('mother.notifications.open', $notification->id) }}">
+                                <span class="d-flex align-items-start gap-2">
+                                    <i class="bi {{ ($notification->data['type'] ?? '') === 'mother_child_note_reply' ? 'bi-chat-left-text-fill' : 'bi-file-earmark-text' }} text-primary mt-1"></i>
+                                    <span>
+                                        <span class="d-block fw-semibold">{{ $notification->data['child_name'] ?? 'طفلكِ' }}</span>
+                                        <span class="mother-notification-message d-block small text-muted">{{ $notification->data['message'] ?? 'تمت إضافة تقرير جديد.' }}</span>
+                                        <small class="text-secondary">{{ $notification->created_at->diffForHumans() }}</small>
+                                    </span>
+                                </span>
+                            </a>
+                        </li>
+                        @empty
+                        <li class="px-3 py-2 small text-muted">لا توجد إشعارات حتى الآن.</li>
+                        @endforelse
+                    </ul>
+                </div>
+
                 <div class="mother-account">
                     <span class="mother-avatar" aria-hidden="true">
                         <i class="bi bi-person-fill"></i>
@@ -476,6 +535,23 @@
             العودة إلى لوحة الأم
 
         </a>
+
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+        </div>
+        @endif
+
+        @if($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
 
 
         <!-- Child information -->
@@ -616,6 +692,44 @@
             </div>
 
         </div>
+
+        <section class="child-card" aria-labelledby="sendChildNoteTitle">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+            <h3 id="sendChildNoteTitle" class="section-title">
+                <i class="bi bi-chat-left-text"></i>
+                إرسال ملاحظة للمعلمين
+            </h3>
+                <a href="{{ route('mother.child_notes.index', $child->id) }}" class="btn child-notes-link">
+                    <i class="bi bi-chat-square-text ms-1"></i>
+                    ملاحظاتي وردود المعلمات
+                </a>
+            </div>
+            @if($child->teachers->isNotEmpty())
+            <form action="{{ route('mother.child_notes.store', $child->id) }}" method="POST">
+                @csrf
+                <label for="childTeacher" class="form-label fw-semibold">إرسال إلى</label>
+                <select id="childTeacher" name="teacher_id" class="form-select mb-3">
+                    <option value="">جميع المعلمين</option>
+                    @foreach($child->teachers as $teacher)
+                    <option value="{{ $teacher->id }}" @selected(old('teacher_id') == $teacher->id)>
+                        {{ $teacher->name }}
+                    </option>
+                    @endforeach
+                </select>
+                <label for="childNote" class="form-label fw-semibold">نص الملاحظة</label>
+                <textarea id="childNote" name="note" class="form-control mb-2" rows="4" maxlength="2000"
+                    placeholder="اكتبي ملاحظة أو رسالة للمعلمين المسؤولين..." required>{{ old('note') }}</textarea>
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                    <small class="text-muted">حد أقصى 2000 حرف</small>
+                    <button type="submit" class="btn btn-primary" style="background: var(--school-color); border-color: var(--school-color);">
+                        <i class="bi bi-send ms-1"></i> إرسال الملاحظة
+                    </button>
+                </div>
+            </form>
+            @else
+            <p class="text-muted mb-0">لا يوجد معلمون معينون لهذا الطفل حاليًا، لذلك لا يمكن إرسال ملاحظة.</p>
+            @endif
+        </section>
 
 
         <!-- Daily reports -->

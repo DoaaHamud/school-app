@@ -13,7 +13,7 @@
     @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $schoolBranding->school_name ?? 'روضتي' }}</title>
+    <title>{{ $schoolBranding->school_name ?? 'رفيق' }}</title>
 
     <!-- Bootstrap 5 RTL -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
@@ -93,6 +93,56 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('[data-date-filter]').forEach((dateInput) => {
+            const form = dateInput.closest('form');
+            const dateValue = form.querySelector('input[type="hidden"][name="search_date"]');
+            const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue.value);
+
+            if (isoDate) {
+                dateInput.value = `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+            }
+
+            form.addEventListener('submit', (event) => {
+                const value = dateInput.value.trim();
+
+                if (!value) {
+                    dateValue.value = '';
+                    return;
+                }
+
+                const dateParts = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+
+                if (!dateParts) {
+                    event.preventDefault();
+                    dateInput.setCustomValidity('أدخل التاريخ بالصيغة يوم/شهر/سنة.');
+                    dateInput.reportValidity();
+                    return;
+                }
+
+                const [, day, month, year] = dateParts;
+                const date = new Date(0);
+                date.setUTCHours(0, 0, 0, 0);
+                date.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
+
+                if (
+                    date.getUTCFullYear() !== Number(year)
+                    || date.getUTCMonth() !== Number(month) - 1
+                    || date.getUTCDate() !== Number(day)
+                ) {
+                    event.preventDefault();
+                    dateInput.setCustomValidity('أدخل تاريخًا صحيحًا بصيغة يوم/شهر/سنة.');
+                    dateInput.reportValidity();
+                    return;
+                }
+
+                dateInput.setCustomValidity('');
+                dateValue.value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            });
+
+            dateInput.addEventListener('input', () => dateInput.setCustomValidity(''));
+        });
+    </script>
 </body>
 
 </html>

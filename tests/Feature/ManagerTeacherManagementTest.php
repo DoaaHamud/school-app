@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\chaldrin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,12 +28,23 @@ class ManagerTeacherManagementTest extends TestCase
             'school_name' => $manager->school_name,
             'name' => 'سارة أحمد',
         ]);
+        $pendingTeacher = User::factory()->create([
+            'role' => 'teacher',
+            'status' => 'pending',
+            'username' => 'pending-teacher-dashboard',
+            'phone' => '15550000067',
+            'school_name' => $manager->school_name,
+            'name' => 'معلمة بانتظار الموافقة',
+        ]);
 
         $this->actingAs($manager)
             ->get(route('manager.dashboard'))
             ->assertOk()
             ->assertSee('دليل الأساتذة')
             ->assertSee(route('manager.teachers.index'))
+            ->assertSee(route('manager.teacher-assignments'))
+            ->assertSee('معلمة بانتظار الموافقة')
+            ->assertDontSee('تعيين أستاذ لصف دراسي')
             ->assertDontSee('سارة أحمد')
             ->assertDontSee('بحث باسم المعلم');
 
@@ -73,6 +85,92 @@ class ManagerTeacherManagementTest extends TestCase
             'id' => $teacher->id,
             'status' => 'approved',
         ]);
+    }
+
+    public function test_manager_can_view_class_assignments_and_unassign_a_teacher_from_a_class(): void
+    {
+        $manager = User::factory()->create([
+            'role' => 'manager',
+            'status' => 'approved',
+            'username' => 'assignment-manager',
+            'phone' => '15550000077',
+            'school_name' => 'مدرسة التعيينات',
+        ]);
+        $mother = User::factory()->create([
+            'role' => 'mother',
+            'username' => 'assignment-mother',
+            'phone' => '15550000078',
+        ]);
+        $teacher = User::factory()->create([
+            'role' => 'teacher',
+            'status' => 'approved',
+            'username' => 'assignment-teacher',
+            'phone' => '15550000079',
+            'school_name' => $manager->school_name,
+            'name' => 'المعلمة المسؤولة',
+        ]);
+        $child = chaldrin::create([
+            'mother_id' => $mother->id,
+            'manager_id' => $manager->id,
+            'name' => 'طفل الصف الأول',
+            'gender' => 'male',
+            'Health_status' => 'جيدة',
+            'class' => 'الأول',
+            'age' => 6,
+            'image' => 'child.jpg',
+        ]);
+        $child->teachers()->attach($teacher->id);
+
+        foreach (['الثاني', 'الثالث'] as $className) {
+            chaldrin::create([
+                'mother_id' => $mother->id,
+                'manager_id' => $manager->id,
+                'name' => "طفل الصف {$className}",
+                'gender' => 'male',
+                'Health_status' => 'جيدة',
+                'class' => $className,
+                'age' => 6,
+                'image' => 'child.jpg',
+            ]);
+        }
+
+        $assignmentResponse = $this->actingAs($manager)
+            ->get(route('manager.teacher-assignments', ['year' => $child->created_at->year]))
+            ->assertOk()
+            ->assertSee('تعيين أستاذ لصف دراسي')
+            ->assertSee('الصف الأول')
+            ->assertSee('المعلمة المسؤولة')
+            ->assertSee(route('manager.unassign.class.quick'));
+
+        $pageContent = $assignmentResponse->getContent();
+        $firstGradePosition = strpos($pageContent, 'الصف الأول');
+        $secondGradePosition = strpos($pageContent, 'الصف الثاني');
+        $thirdGradePosition = strpos($pageContent, 'الصف الثالث');
+        $this->assertNotFalse($firstGradePosition);
+        $this->assertNotFalse($secondGradePosition);
+        $this->assertNotFalse($thirdGradePosition);
+        $this->assertTrue($firstGradePosition < $secondGradePosition);
+        $this->assertTrue($secondGradePosition < $thirdGradePosition);
+
+        $this->actingAs($manager)
+            ->delete(route('manager.unassign.class.quick'), [
+                'teacher_id' => $teacher->id,
+                'year' => $child->created_at->year,
+                'class' => 'الأول',
+            ])
+            ->assertRedirect(route('manager.teacher-assignments', ['year' => $child->created_at->year]))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('child_teacher', [
+            'child_id' => $child->id,
+            'teacher_id' => $teacher->id,
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('manager.teacher-assignments', ['year' => $child->created_at->year]))
+            ->assertOk()
+            ->assertSee('لا يوجد معلمون معينون لهذا الصف.')
+            ->assertDontSee('إلغاء التعيين');
     }
 
     public function test_manager_cannot_deactivate_another_schools_teacher(): void

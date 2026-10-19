@@ -296,8 +296,7 @@
             font-weight: 500;
         }
 
-        .details-btn,
-        .send-note-btn {
+        .details-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -315,12 +314,7 @@
             transition: filter 0.2s ease, transform 0.2s ease;
         }
 
-        .send-note-btn {
-            cursor: pointer;
-        }
-
-        .details-btn:hover,
-        .send-note-btn:hover {
+        .details-btn:hover {
             filter: brightness(0.9);
             color: white;
             transform: translateY(-1px);
@@ -497,7 +491,7 @@
                             <a class="dropdown-item mother-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
                                 href="{{ route('mother.notifications.open', $notification->id) }}">
                                 <span class="d-flex align-items-start gap-2">
-                                    <i class="bi bi-file-earmark-text text-primary mt-1"></i>
+                                    <i class="bi {{ ($notification->data['type'] ?? '') === 'mother_child_note_reply' ? 'bi-chat-left-text-fill' : 'bi-file-earmark-text' }} text-primary mt-1"></i>
                                     <span>
                                         <span class="d-block fw-semibold">{{ $notification->data['child_name'] ?? 'طفلكِ' }}</span>
                                         <span class="mother-notification-message d-block small text-muted">{{ $notification->data['message'] ?? 'تمت إضافة تقرير جديد.' }}</span>
@@ -512,7 +506,7 @@
                     </ul>
                 </div>
 
-                <!-- قائمة حساب الأم (الملف الشخصي، التعديل، والحذف) -->
+                <!-- قائمة حساب الأم -->
                 <div class="dropdown mother-account">
                     <button class="mother-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="mother-avatar">
@@ -539,14 +533,6 @@
                             <a class="dropdown-item py-2" href="{{ route('mother.profile') }}">
                                 <i class="bi bi-person-circle me-1 text-primary"></i> الملف الشخصي
                             </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteMotherModal">
-                                <i class="bi bi-trash me-1"></i> حذف الحساب
-                            </button>
                         </li>
                     </ul>
                 </div>
@@ -705,33 +691,6 @@
             </div>
             @endif
 
-            <div class="mt-4 pt-3 border-top">
-                <h6 class="fw-bold text-dark mb-2">
-                    <i class="bi bi-chat-left-text ms-1" style="color: var(--school-color);"></i>
-                    إرسال ملاحظة للمعلمين
-                </h6>
-                @if($child->teachers->isNotEmpty())
-                <p class="small text-muted mb-2">
-                    ستصل الملاحظة إلى:
-                    {{ $child->teachers->pluck('name')->join('، ') }}
-                </p>
-                <form action="{{ route('mother.child_notes.store', $child->id) }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="note_child_id" value="{{ $child->id }}">
-                    <label for="childNote{{ $child->id }}" class="visually-hidden">ملاحظة عن {{ $child->name }}</label>
-                    <textarea id="childNote{{ $child->id }}" name="note" class="form-control mb-2"
-                        rows="3" maxlength="2000" placeholder="اكتبي ملاحظة أو رسالة للمعلمين المسؤولين..." required>{{ old('note_child_id') == $child->id ? old('note') : '' }}</textarea>
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                        <small class="text-muted">حد أقصى 2000 حرف</small>
-                        <button type="submit" class="send-note-btn">
-                            <i class="bi bi-send ms-1"></i> إرسال الملاحظة
-                        </button>
-                    </div>
-                </form>
-                @else
-                <p class="small text-muted mb-0">لا يوجد معلمون معينون لهذا الطفل حاليًا، لذلك لا يمكن إرسال ملاحظة.</p>
-                @endif
-            </div>
         </div>
         @empty
         <div class="empty-box">
@@ -746,36 +705,6 @@
         @endforelse
         </div>
     </main>
-
-    <!-- نافذة تأكيد حذف حساب الأم (Modal) -->
-    <div class="modal fade" id="deleteMotherModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fs-6">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> تحذير: حذف الحساب
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-                </div>
-                <div class="modal-body text-center py-4">
-                    <i class="bi bi-trash3-fill text-danger display-4 mb-3 d-block"></i>
-                    <h6 class="fw-bold text-dark mb-2">هل أنت متأكد من حذف حسابكِ الشخصي؟</h6>
-                    <p class="text-muted small mb-0">سيتم حذف الحساب نهائياً ولا يمكن التراجع عن هذه العملية.</p>
-                </div>
-                <div class="modal-footer bg-light justify-content-center border-0">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
-                    <!-- تأكد من مطابقة مسار الحذف لديك في الراوتس، مثلاً mother.profile.delete -->
-                    <form action="{{ route('mother.profile.delete') }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger px-4">
-                            <i class="bi bi-trash3 me-1"></i> نعم، احذفي الحساب
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

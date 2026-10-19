@@ -129,7 +129,7 @@
 
         /* Main Container */
         .main-container {
-            max-width: 1400px;
+            max-width: 1300px;
             margin: auto;
             padding: 40px 30px;
         }
@@ -155,24 +155,42 @@
         .filter-box {
             background: #ffffff;
             border: 1px solid #e8ebef;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 18px;
+            padding: 0;
             margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
+            overflow: hidden;
+        }
+
+        .filter-heading {
+            padding: 14px 18px;
+            border-bottom: 1px solid #e8ebef;
+            background: #f8f9fb;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .filter-heading i {
+            color: var(--primary-color);
+        }
+
+        .filter-form {
+            padding: 18px;
         }
 
         /* Class Card */
         .class-card {
             border: 1px solid #e8ebef;
-            border-radius: 12px;
+            border-radius: 18px;
             overflow: hidden;
             background-color: white;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
         }
 
         .class-header {
             background-color: var(--primary-color);
             color: #ffffff;
-            padding: 15px 20px;
+            padding: 14px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -213,8 +231,16 @@
             opacity: 0.9;
         }
 
-        .class-header .btn-light.text-primary {
+        .class-header .btn-light {
             color: var(--primary-color) !important;
+            border: 0;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .class-header .btn-light:hover {
+            background: #f8f9fa;
+            filter: brightness(0.96);
         }
 
         .student-average-badge {
@@ -229,6 +255,24 @@
 
         th {
             white-space: nowrap;
+        }
+
+        .class-card > .card-body table thead th {
+            color: #111827;
+            font-weight: 700;
+            border-bottom-color: #d9dee5;
+        }
+
+        .class-card > .card-body > .table-responsive > table > tbody > tr > td {
+            padding: 10px 12px;
+        }
+
+        .class-card > .card-body {
+            padding: 0;
+        }
+
+        .class-card > .card-body > .table-responsive {
+            padding: 0;
         }
 
         .daily-box {
@@ -284,7 +328,12 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('teacher.daily_variables') ? 'active' : '' }}" href="{{ route('teacher.daily_variables') }}">المتغيرات اليومية</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.mother_notes*') ? 'active' : '' }}" href="{{ route('teacher.mother_notes') }}">ملاحظات أولياء الأمور</a>
+                    </li>
                 </ul>
+
+                @include('teacher.partials.notifications')
 
                 <!-- قائمة حساب المعلم -->
                 <div class="dropdown me-3">
@@ -339,7 +388,11 @@
 
         <!-- Search Filter Form -->
         <div class="filter-box">
-            <form action="{{ route('teacher.classes') }}" method="GET" class="row g-3 align-items-end">
+            <div class="filter-heading">
+                <i class="bi bi-funnel-fill ms-1" style="color: var(--primary-color);"></i>
+                البحث والتصفية
+            </div>
+            <form action="{{ route('teacher.classes') }}" method="GET" class="row g-3 align-items-end filter-form">
 
                 <!-- البحث باسم الطالب -->
                 <div class="col-md-3">
@@ -371,7 +424,8 @@
                     <label class="form-label fw-bold small text-secondary">تاريخ التقرير اليومي</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="bi bi-calendar-date"></i></span>
-                        <input type="date" name="search_date" class="form-control" value="{{ request('search_date') }}" lang="en" style="direction: ltr; text-align: right;">
+                        <input type="text" class="form-control" data-date-filter placeholder="يوم/شهر/سنة" inputmode="numeric" autocomplete="off" dir="ltr" style="text-align: left;">
+                        <input type="hidden" name="search_date" value="{{ request('search_date') }}">
                     </div>
                 </div>
 
@@ -398,7 +452,7 @@
         @foreach($classes as $className => $children)
 
         <!-- Class Card -->
-        <div class="card class-card shadow-sm mb-4">
+        <div class="card class-card mb-4">
 
             <!-- Class Header -->
             <div class="class-header">
@@ -420,7 +474,7 @@
             <!-- Class Body (جدول الأطفال) -->
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover mb-0">
+                    <table class="table table-hover align-middle mb-0 text-center">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
@@ -429,6 +483,7 @@
                                 <th>العمر</th>
                                 <th>الحالة الصحية</th>
                                 <th>المعدل العام للطالب</th>
+                                <th>ولي الأمر</th>
                                 <th>المتغيرات اليومية</th>
                             </tr>
                         </thead>
@@ -470,6 +525,8 @@
                                     @endif
                                 </td>
 
+                                <td>{{ $child->mother?->name ?? '-' }}</td>
+
                                 <td>
                                     @if($child->dailyVariables->count() > 0)
                                     <button class="btn btn-daily-data btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#daily{{ $child->id }}">
@@ -484,7 +541,7 @@
                             <!-- Daily Variables -->
                             @if($child->dailyVariables->count() > 0)
                             <tr>
-                                <td colspan="7" class="p-0">
+                                <td colspan="8" class="p-0">
                                     <div class="collapse {{ request('search_date') ? 'show' : '' }}" id="daily{{ $child->id }}">
                                         <div class="daily-box">
                                             <h5 class="mb-3">

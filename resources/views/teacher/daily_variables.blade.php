@@ -497,7 +497,12 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('teacher.daily_variables') ? 'active' : '' }}" href="{{ route('teacher.daily_variables') }}">المتغيرات اليومية</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.mother_notes*') ? 'active' : '' }}" href="{{ route('teacher.mother_notes') }}">ملاحظات أولياء الأمور</a>
+                    </li>
                 </ul>
+
+                @include('teacher.partials.notifications')
 
                 <!-- قائمة حساب المعلم -->
                 <div class="dropdown me-3">

@@ -11,8 +11,9 @@ use App\Http\Controllers\MotherController;
 // 1. مسارات الضيوف (Guest Routes)
 // ==========================================
 Route::middleware('guest')->group(function () {
-    Route::get('', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('', [AuthController::class, 'register']);
+    Route::view('/', 'welcome')->name('home');
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
 });
@@ -49,6 +50,7 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------
     Route::prefix('manager')->name('manager.')->group(function () {
         Route::get('/dashboard', [ManagerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/teacher-assignments', [ManagerController::class, 'teacherAssignments'])->name('teacher-assignments');
         Route::get('/notifications/{notificationId}', [ManagerController::class, 'openNotification'])->name('notifications.open');
         // حساب المدير
         Route::get('/profile', [ManagerController::class, 'profile'])
@@ -104,6 +106,8 @@ Route::middleware('auth')->group(function () {
         // لوحة تحكم المعلم
         Route::get('/teacher/dashboard', [TeacherController::class, 'dashboard'])->name('teacher.dashboard');
         Route::get('/teacher/notifications/{notificationId}', [TeacherController::class, 'openNotification'])->name('teacher.notifications.open');
+        Route::get('/teacher/mother-notes', [TeacherController::class, 'motherNotes'])->name('teacher.mother_notes');
+        Route::post('/teacher/mother-notes/{noteId}/reply', [TeacherController::class, 'replyToMotherNote'])->name('teacher.mother_notes.reply');
         // حساب المعلم (Profile, Edit, Update, Delete)
         Route::get('/teacher/profile', [TeacherController::class, 'profile'])->name('teacher.profile');
         Route::put('/teacher/profile', [TeacherController::class, 'updateProfile'])->name('teacher.profile.update');
@@ -142,6 +146,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [MotherController::class, 'dashboard'])->name('dashboard');
         Route::get('/notifications/{notificationId}', [MotherController::class, 'openNotification'])->name('notifications.open');
         Route::get('/child/{id}', [MotherController::class, 'showChild'])->name('child_details');
+        Route::get('/child/{childId}/notes', [MotherController::class, 'childNotes'])->name('child_notes.index');
         Route::post('/child/{childId}/notes', [MotherController::class, 'storeChildNote'])->name('child_notes.store');
         Route::get('/profile', [MotherController::class, 'profile'])->name('profile');
         Route::put('/profile/update', [MotherController::class, 'updateProfile'])->name('profile.update');

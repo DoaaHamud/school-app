@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\chaldrin;
+use App\Models\MotherChildNote;
+use App\Notifications\MotherChildNoteReplyNotification;
 use App\Notifications\MotherChildNoteNotification;
 use Illuminate\Http\Request;
 
@@ -40,6 +42,7 @@ class MotherController extends Controller
 
         $validated = $request->validate([
             'note' => 'required|string|max:2000',
+            'teacher_id' => 'nullable|integer',
         ]);
 
         $mother = auth()->user();
@@ -54,15 +57,56 @@ class MotherController extends Controller
                 ->withErrors(['note' => "لا يوجد معلمون معينون للطفل {$child->name} لإرسال الملاحظة إليهم."]);
         }
 
-        foreach ($teachers as $teacher) {
+        $selectedTeacher = isset($validated['teacher_id'])
+            ? $teachers->firstWhere('id', (int) $validated['teacher_id'])
+            : null;
+
+        if (isset($validated['teacher_id']) && !$selectedTeacher) {
+            return back()
+                ->withInput()
+                ->withErrors(['teacher_id' => 'المعلم المحدد غير معين لهذا الطفل.']);
+        }
+
+        $recipients = $selectedTeacher ? collect([$selectedTeacher]) : $teachers;
+
+        foreach ($recipients as $teacher) {
+            $childNote = MotherChildNote::create([
+                'child_id' => $child->id,
+                'mother_id' => $mother->id,
+                'teacher_id' => $teacher->id,
+                'note' => $validated['note'],
+            ]);
+
             $teacher->notify(new MotherChildNoteNotification(
+                $childNote,
                 $child,
                 $mother,
                 $validated['note']
             ));
         }
 
-        return back()->with('success', "تم إرسال الملاحظة إلى جميع المعلمين المسؤولين عن {$child->name}.");
+        $recipientLabel = $selectedTeacher
+            ? "المعلم {$selectedTeacher->name}"
+            : 'جميع المعلمين المسؤولين';
+
+        return back()->with('success', "تم إرسال الملاحظة إلى {$recipientLabel} عن {$child->name}.");
+    }
+
+    public function childNotes($childId)
+    {
+        $this->checkMother();
+
+        $mother = auth()->user();
+        $child = chaldrin::where('mother_id', $mother->id)
+            ->with('manager:id,school_name,school_logo,primary_color')
+            ->findOrFail($childId);
+        $childNotes = MotherChildNote::where('mother_id', $mother->id)
+            ->where('child_id', $child->id)
+            ->with('teacher:id,name')
+            ->latest()
+            ->get();
+
+        return view('mother.child_notes', compact('child', 'childNotes'));
     }
 
     public function openNotification(string $notificationId)
@@ -84,6 +128,10 @@ class MotherController extends Controller
             $notification->markAsRead();
         }
 
+        if (($notification->data['type'] ?? null) === 'mother_child_note_reply') {
+            return redirect()->route('mother.child_notes.index', $child->id);
+        }
+
         return redirect()->route('mother.child_details', $child->id);
     }
 
@@ -99,13 +147,20 @@ class MotherController extends Controller
             ->where('mother_id', $mother->id)
             ->with([
                 'manager:id,school_name,school_logo,primary_color',
+                'teachers:id,name,status',
                 'dailyVariables' => function ($query) {
                     $query->latest();
                 },
             ])
             ->firstOrFail();
+        $motherNotifications = $mother->notifications()->latest()->take(5)->get();
+        $unreadNotificationsCount = $mother->unreadNotifications()->count();
 
-        return view('mother.child_details', compact('child'));
+        return view('mother.child_details', compact(
+            'child',
+            'motherNotifications',
+            'unreadNotificationsCount'
+        ));
     }
 
     // فحص صلاحيات الأم

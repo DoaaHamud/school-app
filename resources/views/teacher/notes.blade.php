@@ -69,7 +69,8 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold small text-secondary">تاريخ التقرير</label>
-                    <input type="date" name="search_date" class="form-control" value="{{ request('search_date') }}">
+                    <input type="text" class="form-control" data-date-filter placeholder="يوم/شهر/سنة" inputmode="numeric" autocomplete="off" dir="ltr" style="text-align: left;">
+                    <input type="hidden" name="search_date" value="{{ request('search_date') }}">
                 </div>
                 <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> بحث</button>

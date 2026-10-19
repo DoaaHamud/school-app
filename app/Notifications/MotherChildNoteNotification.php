@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\User;
 use App\Models\chaldrin;
+use App\Models\MotherChildNote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -12,6 +13,7 @@ class MotherChildNoteNotification extends Notification
     use Queueable;
 
     public function __construct(
+        private MotherChildNote $childNote,
         private chaldrin $child,
         private User $mother,
         private string $note
@@ -26,6 +28,7 @@ class MotherChildNoteNotification extends Notification
     {
         return [
             'type' => 'mother_child_note',
+            'child_note_id' => $this->childNote->id,
             'child_id' => $this->child->id,
             'child_name' => $this->child->name,
             'mother_name' => $this->mother->name,

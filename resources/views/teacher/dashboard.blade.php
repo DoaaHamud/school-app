@@ -277,41 +277,12 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('teacher.daily_variables') ? 'active' : '' }}" href="{{ route('teacher.daily_variables') }}">المتغيرات اليومية</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('teacher.mother_notes*') ? 'active' : '' }}" href="{{ route('teacher.mother_notes') }}">ملاحظات أولياء الأمور</a>
+                    </li>
                 </ul>
 
-                <div class="dropdown me-lg-3">
-                    <button class="teacher-notification-btn rounded-2" type="button"
-                        data-bs-toggle="dropdown" aria-expanded="false" aria-label="الإشعارات">
-                        <i class="bi bi-bell fs-5"></i>
-                        @if($unreadNotificationsCount > 0)
-                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
-                            {{ $unreadNotificationsCount }}
-                        </span>
-                        @endif
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end teacher-dropdown teacher-notifications-menu">
-                        <li class="dropdown-header fw-bold">الإشعارات</li>
-                        @forelse($teacherNotifications as $notification)
-                        <li>
-                            <a class="dropdown-item teacher-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
-                                href="{{ route('teacher.notifications.open', $notification->id) }}">
-                                <span class="d-flex align-items-start gap-2">
-                                    <i class="bi {{ ($notification->data['type'] ?? '') === 'mother_child_note' ? 'bi-chat-left-text-fill' : 'bi-person-plus-fill' }} text-primary mt-1"></i>
-                                    <span>
-                                        <span class="d-block">{{ $notification->data['message'] ?? 'تم إسناد طلاب جدد إليكِ.' }}</span>
-                                        @if(($notification->data['type'] ?? '') === 'mother_child_note')
-                                        <span class="d-block small mt-1 text-wrap">{{ $notification->data['note'] ?? '' }}</span>
-                                        @endif
-                                        <small class="text-secondary">{{ $notification->created_at->diffForHumans() }}</small>
-                                    </span>
-                                </span>
-                            </a>
-                        </li>
-                        @empty
-                        <li class="px-3 py-2 small text-muted">لا توجد إشعارات حتى الآن.</li>
-                        @endforelse
-                    </ul>
-                </div>
+                @include('teacher.partials.notifications')
 
                 <!-- قائمة حساب المعلم -->
                 <div class="dropdown me-3">

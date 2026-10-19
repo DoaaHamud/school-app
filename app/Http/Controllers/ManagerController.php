@@ -33,31 +33,59 @@ class ManagerController extends Controller
             ->latest()
             ->get();
 
+        return view('manager.dashboard', compact(
+            'pendingTeachers',
+            'managerNotifications',
+            'unreadNotificationsCount'
+        ));
+    }
+
+    public function teacherAssignments(Request $request)
+    {
+        $this->checkManager();
+        $request->validate([
+            'year' => 'sometimes|integer|min:2000|max:2100',
+        ]);
+
+        $manager = auth()->user();
+        $year = (int) $request->input('year', date('Y'));
         $approvedTeachers = User::where('role', 'teacher')
             ->where('status', 'approved')
             ->where('school_name', $manager->school_name)
-            ->latest()
-            ->get();
-        $approvedTeachersCount = $approvedTeachers->count();
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        $selectedYear = $request->get('year', date('Y'));
+        $classAssignments = chaldrin::where('manager_id', $manager->id)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('class')
+            ->with(['teachers' => function ($query) use ($manager) {
+                $query->where('users.school_name', $manager->school_name)
+                    ->where('users.role', 'teacher')
+                    ->whereIn('users.status', ['approved', 'deactivated'])
+                    ->orderBy('users.name');
+            }])
+            ->get()
+            ->groupBy('class')
+            ->map(fn ($students) => $students
+                ->flatMap(fn ($student) => $student->teachers)
+                ->unique('id')
+                ->sortBy('name')
+                ->values())
+            ->sortBy(function ($teachers, $className) {
+                $priority = match (true) {
+                    str_contains($className, 'الأول'), str_contains($className, 'الاول') => 1,
+                    str_contains($className, 'الثاني') => 2,
+                    str_contains($className, 'الثالث') => 3,
+                    default => 4,
+                };
 
-        // جلب الصفوف
-        $classes = chaldrin::where('manager_id', $manager->id)
-            ->whereYear('created_at', $selectedYear)
-            ->select('class')
-            ->distinct()
-            ->orderBy('class')
-            ->pluck('class');
+                return sprintf('%d-%s', $priority, $className);
+            });
 
-        return view('manager.dashboard', compact(
-            'pendingTeachers',
+        return view('manager.teacher-assignments', compact(
+            'year',
             'approvedTeachers',
-            'approvedTeachersCount',
-            'selectedYear',
-            'classes',
-            'managerNotifications',
-            'unreadNotificationsCount'
+            'classAssignments'
         ));
     }
 
@@ -74,7 +102,7 @@ class ManagerController extends Controller
         return redirect()->route('manager.dashboard');
     }
 
-    // دالة حفظ التعيين السريع من الداشبورد
+    // حفظ تعيين صف من صفحة إدارة تعيينات المعلمين
     public function assignClassQuickStore(Request $request)
     {
         $this->checkManager();
@@ -128,7 +156,7 @@ class ManagerController extends Controller
 
         $manager = auth()->user();
         $teacher = User::where('role', 'teacher')
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'deactivated'])
             ->where('school_name', $manager->school_name)
             ->findOrFail($request->teacher_id);
 
@@ -148,10 +176,9 @@ class ManagerController extends Controller
 
         $teacher->childrenAsTeacher()->detach($classStudentIds->all());
 
-        return back()->with(
-            'success',
-            'تم إلغاء تعيين المعلم من الصف بنجاح، مع بقاء الطلاب والتقارير محفوظة.'
-        );
+        return redirect()
+            ->route('manager.teacher-assignments', ['year' => $request->year])
+            ->with('success', 'تم إلغاء تعيين المعلم من الصف بنجاح، مع بقاء الطلاب والتقارير محفوظة.');
     }
 
     // 2. الموافقة على طلب معلم
@@ -416,7 +443,7 @@ class ManagerController extends Controller
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
             })
-            ->with('teachers')
+            ->with(['teachers', 'mother:id,name'])
             ->latest()
             ->get();
 

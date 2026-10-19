@@ -14,6 +14,9 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertOk()
+            ->assertSee('لكل مرحلة دراسية')
+            ->assertSee(route('register'))
+            ->assertSee(route('login'));
     }
 }
