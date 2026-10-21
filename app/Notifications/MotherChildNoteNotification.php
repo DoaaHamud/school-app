@@ -33,7 +33,7 @@ class MotherChildNoteNotification extends Notification
             'child_name' => $this->child->name,
             'mother_name' => $this->mother->name,
             'note' => $this->note,
-            'message' => "وصلتك ملاحظة من {$this->mother->name} بخصوص الطفل {$this->child->name}.",
+            'message' => "وصلتك ملاحظة من {$this->mother->name} بخصوص الطالب {$this->child->name}.",
         ];
     }
 }

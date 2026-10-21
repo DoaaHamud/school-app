@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\School;
 use App\Notifications\TeacherRegistrationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,12 +14,12 @@ class AuthController extends Controller
 {
     public function showRegisterForm()
     {
-        $schoolNames = User::where('role', 'manager')
-            ->where('status', 'approved')
-            ->whereNotNull('school_name')
+        $schoolNames = School::whereHas('users', function ($query) {
+            $query->where('role', 'manager')->where('status', 'approved');
+        })
             ->distinct()
-            ->orderBy('school_name')
-            ->pluck('school_name');
+            ->orderBy('name')
+            ->pluck('name');
 
         return view('auth.register', compact('schoolNames'));
     }
@@ -33,24 +34,50 @@ class AuthController extends Controller
                 'string',
                 'max:255',
                 Rule::exists('users', 'school_name')
-                    ->where(fn ($query) => $query
+                    ->where(fn($query) => $query
                         ->where('role', 'manager')
                         ->where('status', 'approved')),
             ];
+        } elseif ($request->input('role') === 'manager') {
+            $schoolNameRules = ['required', 'string', 'max:255'];
         }
 
-        $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'username'    => 'required|string|max:255|unique:users',
-            'email'       => 'required|string|email|max:255|unique:users',
-            'password'    => 'required|string|min:8|confirmed',
-            'role'        => 'required|in:manager,teacher,mother',
-            'phone'       => 'required|numeric',
-            'school_name' => $schoolNameRules,
-        ]);
+        $validated = $request->validate(
+            [
+                'name'        => 'required|string|max:255',
+                'username'    => 'required|string|max:255|unique:users,username',
+                'email'       => 'required|string|email|max:255|unique:users,email',
+                'password'    => 'required|string|min:8|confirmed',
+                'role'        => 'required|in:manager,teacher,mother',
+                // تم إضافة unique:users,phone لتفادي خطأ Database Unique Constraint Violation
+                'phone'       => 'required|numeric|unique:users,phone',
+                'school_name' => $schoolNameRules,
+            ],
+            [
+                'phone.unique'    => 'رقم الهاتف مسجل مسبقًا.',
+                'phone.required'  => 'حقل رقم الهاتف مطلوب.',
+                'phone.numeric'   => 'رقم الهاتف يجب أن يتكون من أرقام فقط.',
+                'email.unique'    => 'البريد الإلكتروني مسجل مسبقًا.',
+                'username.unique' => 'اسم المستخدم مسجل مسبقًا.',
+            ]
+        );
 
         // ولي الأمر مفعل فوراً، بينما المدير والمعلم ينتظرون الموافقة
         $status = ($validated['role'] === 'mother') ? 'approved' : 'pending';
+
+        $schoolName = $validated['role'] === 'mother'
+            ? null
+            : ($validated['school_name'] ?? null);
+
+        $school = $schoolName !== null
+            ? School::where('name', $schoolName)->whereHas('users', function ($query) {
+                $query->where('role', 'manager')->where('status', 'approved');
+            })->first()
+            : null;
+
+        if ($validated['role'] === 'teacher' && !$school) {
+            abort(409, 'المدرسة المحددة غير موجودة.');
+        }
 
         $user = User::create([
             'name'        => $validated['name'],
@@ -59,15 +86,16 @@ class AuthController extends Controller
             'password'    => Hash::make($validated['password']),
             'role'        => $validated['role'],
             'phone'       => $validated['phone'],
-            'school_name' => $validated['school_name'] ?? null,
+            'school_name' => $schoolName,
+            'school_id'   => $school?->id,
             'status'      => $status,
         ]);
 
-        if ($user->role === 'teacher' && $user->school_name !== null) {
+        if ($user->role === 'teacher' && $user->school_id !== null) {
             User::where('role', 'manager')
                 ->where('status', 'approved')
-                ->where('school_name', $user->school_name)
-                ->each(fn (User $manager) => $manager->notify(
+                ->where('school_id', $user->school_id)
+                ->each(fn(User $manager) => $manager->notify(
                     new TeacherRegistrationNotification($user)
                 ));
         }
@@ -79,7 +107,6 @@ class AuthController extends Controller
         Auth::login($user);
         return redirect()->route('mother.dashboard')->with('success', 'تم إنشاء الحساب وتسجيل الدخول بنجاح.');
     }
-
     public function showLoginForm()
     {
         return view('auth.login');

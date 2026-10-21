@@ -9,6 +9,7 @@ use App\Models\MotherChildNote;
 use App\Notifications\MotherChildNoteReplyNotification;
 use App\Notifications\NewDailyReportNotification;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
 {
@@ -31,9 +32,7 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
-        $schoolBranding = User::where('role', 'manager')
-            ->where('school_name', $teacher->school_name)
-            ->first() ?? $teacher;
+        $schoolBranding = $teacher->school ?? $teacher;
 
         // جلب الطلاب المسندين لهذا المعلم
         $students = $teacher->childrenAsTeacher()
@@ -81,13 +80,15 @@ class TeacherController extends Controller
     public function motherNotes()
     {
         $this->checkTeacher();
+        $teacher = auth()->user();
+        $schoolBranding = $teacher->school ?? $teacher;
 
-        $childNotes = MotherChildNote::where('teacher_id', auth()->id())
+        $childNotes = MotherChildNote::where('teacher_id', $teacher->id)
             ->with(['child:id,name,class', 'mother:id,name'])
             ->latest()
             ->get();
 
-        return view('teacher.mother_notes', compact('childNotes'));
+        return view('teacher.mother_notes', compact('teacher', 'schoolBranding', 'childNotes'));
     }
 
     public function replyToMotherNote(Request $request, $noteId)
@@ -136,19 +137,34 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
-        $schoolBranding = User::where('role', 'manager')
-            ->where('school_name', $teacher->school_name)
-            ->first() ?? $teacher;
+        $schoolBranding = $teacher->school ?? $teacher;
 
-        $availableClasses = $teacher->childrenAsTeacher()
-            ->whereNotNull('class')
-            ->pluck('class')
-            ->unique()
-            ->values();
+        $assignedStudents = $teacher->childrenAsTeacher()
+            ->get(['chaldrins.class', 'chaldrins.section']);
+
+        $classAliases = $assignedStudents
+            ->groupBy(fn ($student) => $this->normalizeClassSection($student->class))
+            ->map(fn ($students) => $students->pluck('class')->unique()->values());
+        $sectionAliases = $assignedStudents
+            ->filter(fn ($student) => $student->section !== null)
+            ->groupBy(fn ($student) => $this->normalizeClassSection($student->section))
+            ->map(fn ($students) => $students->pluck('section')->unique()->values());
+
+        $availableClasses = $classAliases->map(fn ($aliases) => $aliases->first())->values();
+        $availableSections = $sectionAliases->map(fn ($aliases) => $aliases->first())->sort()->values();
 
         $searchName = $request->input('search_name');
         $searchClass = $request->input('search_class');
+        $searchSection = $request->input('search_section');
         $searchDate = $request->input('search_date');
+        $searchClassKey = $searchClass !== null ? $this->normalizeClassSection($searchClass) : null;
+        $searchSectionKey = $searchSection !== null ? $this->normalizeClassSection($searchSection) : null;
+        $selectedClassOption = $searchClassKey !== null
+            ? $classAliases->get($searchClassKey, collect())->first()
+            : null;
+        $selectedSectionOption = $searchSectionKey !== null
+            ? $sectionAliases->get($searchSectionKey, collect())->first()
+            : null;
 
         $query = $teacher->childrenAsTeacher()->with([
             'mother:id,name',
@@ -164,7 +180,11 @@ class TeacherController extends Controller
         }
 
         if (!empty($searchClass)) {
-            $query->where('class', $searchClass);
+            $query->whereIn('class', $classAliases->get($searchClassKey, collect([$searchClass])));
+        }
+
+        if (!empty($searchSection)) {
+            $query->whereIn('section', $sectionAliases->get($searchSectionKey, collect([$searchSection])));
         }
 
         if (!empty($searchDate)) {
@@ -203,18 +223,54 @@ class TeacherController extends Controller
             'ثاني عشر' => 12,
         ];
 
-        // تجميع الطلاب حسب الصف وترتيبهم تصاعدياً بدقة
-        $classes = $students->groupBy('class')->sortBy(function ($group, $className) use ($order) {
+        // Keep each class-section combination in its own group.
+        $classes = $students->groupBy(fn ($student) => json_encode(
+            [
+                $this->normalizeClassSection($student->class),
+                $this->normalizeClassSection($student->section),
+            ],
+            JSON_UNESCAPED_UNICODE
+        ))->map(function ($children) {
+            $firstChild = $children->first();
+
+            return [
+                'className' => $firstChild->class,
+                'sectionName' => $firstChild->section,
+                'children' => $children,
+            ];
+        })->sortBy(function ($group) use ($order) {
+            $rank = 99;
             foreach ($order as $key => $val) {
-                if (str_contains($className, $key)) {
-                    return $val;
+                if (str_contains($group['className'], $key)) {
+                    $rank = $val;
+                    break;
                 }
             }
-            return 99;
-        });
 
-        return view('teacher.classes', compact('teacher', 'classes', 'availableClasses', 'schoolBranding'));
+            return sprintf('%02d|%s|%s', $rank, $group['className'], $group['sectionName'] ?? '');
+        })->values();
+
+        return view('teacher.classes', compact(
+            'teacher',
+            'classes',
+            'availableClasses',
+            'availableSections',
+            'selectedClassOption',
+            'selectedSectionOption',
+            'schoolBranding'
+        ));
     }
+
+    private function normalizeClassSection(?string $value): string
+    {
+        $value = trim((string) $value);
+        $value = preg_replace('/[\x{200B}-\x{200F}\x{FEFF}\x{0640}]/u', '', $value) ?? $value;
+        $value = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $value) ?? $value;
+        $value = strtr($value, ['أ' => 'ا', 'إ' => 'ا', 'آ' => 'ا', 'ٱ' => 'ا']);
+
+        return preg_replace('/\s+/u', ' ', $value) ?? $value;
+    }
+
     // 3. عرض تفاصيل طالب
     public function showStudent($id)
     {
@@ -224,7 +280,7 @@ class TeacherController extends Controller
 
         // نتأكد أن الطالب تابع لهذا المعلم
         $student = $teacher->childrenAsTeacher()
-            ->with('dailyVariables')
+            ->with(['dailyVariables', 'mother'])
             ->where('chaldrins.id', $id)
             ->firstOrFail();
 
@@ -246,17 +302,22 @@ class TeacherController extends Controller
             ->where('chaldrins.id', $studentId)
             ->firstOrFail();
 
-        $request->validate([
-            'topic' => 'required|string|max:255',
+        $subjects = $this->configuredSchoolOptions($teacher, 'subjects');
+        $validated = $request->validate([
+            'topic_subject' => ['required', Rule::in([...$subjects, '__custom__'])],
+            'custom_topic' => 'nullable|required_if:topic_subject,__custom__|string|max:255',
             'result' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string',
             'report_date' => 'required|date',
         ]);
+        $topic = $validated['topic_subject'] === '__custom__'
+            ? trim($validated['custom_topic'])
+            : $validated['topic_subject'];
 
         $report = Daily_variables::create([
             'child_id' => $student->id,
             'teacher_id' => $teacher->id,
-            'topic' => $request->topic,
+            'topic' => $topic,
             'result' => $request->result,
             'notes' => $request->notes,
             'report_date' => $request->report_date,
@@ -331,9 +392,9 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
-        $schoolBranding = User::where('role', 'manager')
-            ->where('school_name', $teacher->school_name)
-            ->first() ?? $teacher;
+        $schoolBranding = $teacher->school ?? $teacher;
+        $subjects = $this->configuredSchoolOptions($teacher, 'subjects');
+        $sections = $this->configuredSchoolOptions($teacher, 'sections');
 
         // Load only each student's latest report for the card preview.
         $students = $teacher->childrenAsTeacher()
@@ -348,7 +409,9 @@ class TeacherController extends Controller
         return view('teacher.daily_variables', compact(
             'teacher',
             'students',
-            'schoolBranding'
+            'schoolBranding',
+            'subjects',
+            'sections'
         ));
     }
 
@@ -366,9 +429,10 @@ class TeacherController extends Controller
             ->orderByDesc('report_date')
             ->orderByDesc('id')
             ->paginate(10);
+        $subjects = $this->configuredSchoolOptions($teacher, 'subjects');
 
         return response()->json([
-            'html' => view('teacher.partials.daily_reports', compact('reports'))->render(),
+            'html' => view('teacher.partials.daily_reports', compact('reports', 'subjects'))->render(),
             'has_more' => $reports->hasMorePages(),
             'next_page' => $reports->currentPage() + 1,
             'total' => $reports->total(),
@@ -381,14 +445,43 @@ class TeacherController extends Controller
         $this->checkTeacher();
 
         $teacher = auth()->user();
-        $schoolBranding = User::where('role', 'manager')
-            ->where('school_name', $teacher->school_name)
-            ->first() ?? $teacher;
+        abort_if($teacher->school_id === null, 409, 'لا توجد مدرسة مرتبطة بحساب المعلم.');
 
-        // جلب قائمة الأمهات لاختيار الأم من القائمة
-        $mothers = User::where('role', 'mother')->get();
+        $schoolBranding = $teacher->school ?? $teacher;
+        $classes = $this->configuredSchoolOptions($teacher, 'classes');
+        $sections = $this->configuredSchoolOptions($teacher, 'sections');
 
-        return view('teacher.student.create', compact('teacher', 'mothers', 'schoolBranding'));
+        $schoolMothers = User::where('role', 'mother')
+            ->where('status', 'approved')
+            ->whereHas('schoolRequests', function ($query) use ($teacher) {
+                $query->where('school_id', $teacher->school_id)
+                    ->where('status', 'approved');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'username', 'phone']);
+        return view('teacher.student.create', compact(
+            'teacher',
+            'schoolMothers',
+            'schoolBranding',
+            'classes',
+            'sections'
+        ));
+    }
+
+    private function configuredSchoolOptions(User $teacher, string $attribute): array
+    {
+        $options = $teacher->school?->{$attribute} ?? [];
+
+        if (is_string($options)) {
+            $options = preg_split('/[,،\r\n]+/u', $options) ?: [];
+        }
+
+        return collect($options)
+            ->map(fn ($option) => trim((string) $option))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     // 8. حفظ بيانات الطفل الجديد
@@ -397,17 +490,28 @@ class TeacherController extends Controller
         $this->checkTeacher();
         $teacher = auth()->user();
 
-        // البحث عن مدير الروضة بنفس اسم المدرسة
-        $manager = User::where('role', 'manager')
-            ->where('school_name', $teacher->school_name)
-            ->first();
+        abort_if($teacher->school_id === null, 409, 'لا توجد مدرسة مرتبطة بحساب المعلم.');
+        $classes = $this->configuredSchoolOptions($teacher, 'classes');
+        $sections = $this->configuredSchoolOptions($teacher, 'sections');
 
         $request->validate([
-            'mother_id'     => 'required|exists:users,id',
+            'mother_id'     => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(
+                    fn ($query) => $query->where('role', 'mother')->where('status', 'approved')
+                ),
+                Rule::exists('school_mother_requests', 'mother_id')->where(
+                    fn ($query) => $query
+                        ->where('school_id', $teacher->school_id)
+                        ->where('status', 'approved')
+                ),
+            ],
             'name'          => 'required|string|max:255',
             'gender'        => 'required|in:male,female',
             'health_status' => 'required|string',
-            'class'         => 'required|string|max:255',
+            'class'         => ['required', 'string', 'max:255', Rule::in($classes)],
+            'section'       => ['required', 'string', 'max:255', Rule::in($sections)],
             'age'           => 'required|integer|min:1|max:10',
             'image'         => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
@@ -420,11 +524,12 @@ class TeacherController extends Controller
 
         $student = chaldrin::create([
             'mother_id'     => $request->mother_id,
-            'manager_id'    => $manager ? $manager->id : null, // ربط بـ ID المدير المكتشف
+            'school_id'     => $teacher->school_id,
             'name'          => $request->name,
             'gender'        => $request->gender,
             'Health_status' => $request->health_status,
             'class'         => $request->class,
+            'section'       => $request->section,
             'age'           => $request->age,
             'image'         => $imageName,
         ]);
@@ -454,7 +559,6 @@ class TeacherController extends Controller
     //     // إنشاء الطفل في جدول chaldrins
     //     $student = chaldrin::create([
     //         'mother_id' => $request->mother_id,
-    //         'manager_id' => null,
     //         'name' => $request->name,
     //         'gender' => $request->gender,
     //         'Health_status' => $request->Health_status,

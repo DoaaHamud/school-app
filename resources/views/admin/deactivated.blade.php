@@ -43,6 +43,7 @@
                                 <th>الاسم</th>
                                 <th>اسم المستخدم</th>
                                 <th>البريد الإلكتروني</th>
+                                <th>اسم المدرسة</th>
                                 <th>الحالة</th>
                                 <th>الإجراءات</th>
                             </tr>
@@ -54,6 +55,7 @@
                                 <td>{{ $manager->name }}</td>
                                 <td>{{ $manager->username }}</td>
                                 <td>{{ $manager->email }}</td>
+                                <td>{{ $manager->school?->name ?? 'غير محددة' }}</td>
                                 <td><span class="badge bg-danger">معطل</span></td>
                                 <td>
                                     <div class="d-flex gap-2">

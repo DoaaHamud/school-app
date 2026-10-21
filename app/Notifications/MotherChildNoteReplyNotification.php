@@ -25,7 +25,7 @@ class MotherChildNoteReplyNotification extends Notification
             'child_id' => $this->childNote->child_id,
             'child_name' => $this->childNote->child->name,
             'teacher_name' => $this->childNote->teacher->name,
-            'message' => "ردّت المعلمة {$this->childNote->teacher->name} على ملاحظتك بخصوص الطفل {$this->childNote->child->name}.",
+            'message' => "ردّت المعلمة {$this->childNote->teacher->name} على ملاحظتك بخصوص الطالب {$this->childNote->child->name}.",
         ];
     }
 }

@@ -222,6 +222,7 @@
                                 <th>الاسم</th>
                                 <th>اسم المستخدم</th>
                                 <th>البريد الإلكتروني</th>
+                                <th>اسم المدرسة</th>
                                 <th>الهاتف</th>
                                 <th style="width: 180px;">الإجراءات</th>
                             </tr>
@@ -233,6 +234,7 @@
                                 <td class="fw-bold">{{ $manager->name }}</td>
                                 <td>{{ $manager->username }}</td>
                                 <td>{{ $manager->email }}</td>
+                                <td>{{ $manager->school?->name ?? $manager->school_name ?? '-' }}</td>
                                 <td>{{ $manager->phone ?? '-' }}</td>
                                 <td>
                                     <div class="d-flex justify-content-center gap-2">
@@ -305,6 +307,7 @@
                                 <th>الاسم</th>
                                 <th>اسم المستخدم</th>
                                 <th>البريد الإلكتروني</th>
+                                <th>اسم المدرسة</th>
                                 <th>الحالة</th>
                                 <th style="width: 150px;">الإجراءات</th>
                             </tr>
@@ -316,6 +319,7 @@
                                 <td class="fw-bold">{{ $manager->name }}</td>
                                 <td>{{ $manager->username }}</td>
                                 <td>{{ $manager->email }}</td>
+                                <td>{{ $manager->school?->name ?? $manager->school_name ?? '-' }}</td>
                                 <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2">نشط</span></td>
                                 <td>
                                     <form action="{{ route('admin.managers.deactivate', $manager->id) }}" method="POST" class="m-0">

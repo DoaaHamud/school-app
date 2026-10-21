@@ -56,7 +56,13 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold text-secondary small">موضوع النشاط</label>
-                            <input type="text" name="topic" class="form-control" value="{{ $daily->topic }}" required>
+                            <input type="text" name="topic" class="form-control" list="report-topics-{{ $daily->id }}"
+                                value="{{ $daily->topic }}" required>
+                            <datalist id="report-topics-{{ $daily->id }}">
+                                @foreach($subjects as $subject)
+                                    <option value="{{ $subject }}">
+                                @endforeach
+                            </datalist>
                         </div>
 
                         <div class="mb-3">

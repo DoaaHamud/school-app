@@ -161,6 +161,7 @@
             <!-- جهة اليسار: حساب المدير وزر الخروج -->
 
             <div class="d-flex align-items-center gap-3 flex-wrap">
+                @include('manager.partials.notifications')
 
                 <!-- قائمة المدير المنسدلة -->
 
@@ -388,15 +389,9 @@
 
                     <span class="d-block text-muted small mb-1">الصفوف المسندة</span>
 
-                    @php
+                    @forelse($teacher->assigned_class_sections as $classSection)
 
-                    $teacherClasses = $teacher->childrenAsTeacher->pluck('class')->filter()->unique();
-
-                    @endphp
-
-                    @forelse($teacherClasses as $class)
-
-                    <span class="badge bg-light text-dark border px-2 py-1 me-1">{{ $class }}</span>
+                    <span class="badge bg-light text-dark border px-2 py-1 me-1">{{ $classSection }}</span>
 
                     @empty
 

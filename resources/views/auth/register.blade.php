@@ -310,7 +310,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="school_name">اسم المدرسة (مطلوب للمعلمات، اختياري للمدراء)</label>
+                    <label for="school_name">اسم المدرسة (مطلوب للمدراء والمعلمات)</label>
                     <input type="text" name="school_name" id="school_name" list="approved-school-names" value="{{ old('school_name') }}" autocomplete="organization">
                     <datalist id="approved-school-names">
                         @foreach($schoolNames as $schoolName)
@@ -359,10 +359,16 @@
         const roleInput = document.getElementById('role');
         const schoolNameInput = document.getElementById('school_name');
 
+        const schoolField = schoolNameInput.closest('.form-field');
+
         const updateSchoolRequirement = () => {
-            const isTeacher = roleInput.value === 'teacher';
-            schoolNameInput.required = isTeacher;
-            schoolNameInput.setAttribute('aria-required', String(isTeacher));
+            const isRequired = roleInput.value === 'teacher' || roleInput.value === 'manager';
+            schoolNameInput.required = isRequired;
+            schoolNameInput.setAttribute('aria-required', String(isRequired));
+            schoolField.style.display = roleInput.value === 'mother' ? 'none' : '';
+            if (roleInput.value === 'mother') {
+                schoolNameInput.value = '';
+            }
         };
 
         roleInput.addEventListener('change', updateSchoolRequirement);

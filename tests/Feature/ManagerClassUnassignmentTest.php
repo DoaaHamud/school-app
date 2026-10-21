@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\chaldrin;
 use App\Models\Daily_variables;
+use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,11 +15,13 @@ class ManagerClassUnassignmentTest extends TestCase
 
     public function test_manager_can_unassign_a_teacher_from_a_class_without_deleting_students_or_reports(): void
     {
+        $school = School::create(['name' => 'مدرسة الإسناد']);
         $manager = User::factory()->create([
             'role' => 'manager',
             'username' => 'manager-unassign',
             'phone' => '15550000031',
             'school_name' => 'مدرسة الإسناد',
+            'school_id' => $school->id,
         ]);
         $mother = User::factory()->create([
             'role' => 'mother',
@@ -31,6 +34,7 @@ class ManagerClassUnassignmentTest extends TestCase
             'username' => 'teacher-unassign',
             'phone' => '15550000033',
             'school_name' => $manager->school_name,
+            'school_id' => $school->id,
         ]);
         $otherTeacher = User::factory()->create([
             'role' => 'teacher',
@@ -38,6 +42,7 @@ class ManagerClassUnassignmentTest extends TestCase
             'username' => 'teacher-unassign-two',
             'phone' => '15550000034',
             'school_name' => $manager->school_name,
+            'school_id' => $school->id,
         ]);
 
         $classChild = $this->createChild($mother, $manager, 'الأول');
@@ -82,7 +87,7 @@ class ManagerClassUnassignmentTest extends TestCase
     {
         return chaldrin::create([
             'mother_id' => $mother->id,
-            'manager_id' => $manager->id,
+            'school_id' => $manager->school_id,
             'name' => 'طالب ' . $class,
             'gender' => 'female',
             'Health_status' => 'جيدة',

@@ -21,12 +21,12 @@ class TeacherAssignmentNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $studentText = $this->studentCount === 1 ? 'طفل جديد' : 'أطفال جدد';
+        $studentText = $this->studentCount === 1 ? 'طالب جديد' : 'طلاب جدد';
 
         return [
             'class' => $this->className,
             'student_count' => $this->studentCount,
-            'message' => "تم إسناد {$this->studentCount} {$studentText} من صف {$this->className} إليكِ.",
+            'message' => "تم إسناد {$this->studentCount} {$studentText} من  {$this->className} إليكِ.",
         ];
     }
 }

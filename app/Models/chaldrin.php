@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class chaldrin extends Model
@@ -11,11 +12,12 @@ class chaldrin extends Model
 
     protected $fillable = [
         'mother_id',
-        'manager_id',
+        'school_id',
         'name',
         'gender',
         'Health_status',
         'class',
+        'section',
         'age',
         'image',
     ];
@@ -23,6 +25,11 @@ class chaldrin extends Model
     public function mother()
     {
         return $this->belongsTo(User::class, 'mother_id');
+    }
+
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
     }
 
     public function teachers()
@@ -45,8 +52,4 @@ class chaldrin extends Model
         return $this->hasOne(Daily_variables::class, 'child_id')->latestOfMany('report_date');
     }
 
-    public function manager()
-    {
-        return $this->belongsTo(User::class, 'manager_id');
-    }
 }

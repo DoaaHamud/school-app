@@ -64,6 +64,8 @@ Route::middleware('auth')->group(function () {
 
         // موافقة ورفض معلم
         Route::patch('/teachers/{id}/approve', [ManagerController::class, 'approveTeacher'])->name('teachers.approve');
+        Route::patch('/mothers/requests/{requestId}/approve', [ManagerController::class, 'approveMotherRequest'])->name('mothers.requests.approve');
+        Route::patch('/mothers/requests/{requestId}/reject', [ManagerController::class, 'rejectMotherRequest'])->name('mothers.requests.reject');
         Route::patch('/teachers/{id}/reject', [ManagerController::class, 'rejectTeacher'])->name('teachers.reject');
         Route::patch('/teachers/{id}/deactivate', [ManagerController::class, 'deactivateTeacher'])->name('teachers.deactivate');
         Route::get('/teachers/deactivated', [ManagerController::class, 'deactivatedTeachers'])->name('teachers.deactivated');
@@ -119,7 +121,6 @@ Route::middleware('auth')->group(function () {
 
         // صفحة إضافة طفل جديد (GET)
         Route::get('/teacher/students/create', [TeacherController::class, 'createStudent'])->name('teacher.students.create');
-
         // حفظ الطفل الجديد (POST)
         Route::post('/teacher/students', [TeacherController::class, 'storeStudent'])->name('teacher.students.store');
 
@@ -144,6 +145,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('auth')->prefix('mother')->name('mother.')->group(function () {
         Route::get('/dashboard', [MotherController::class, 'dashboard'])->name('dashboard');
+        Route::get('/school-requests', [MotherController::class, 'schoolRequests'])->name('school_requests');
+        Route::post('/school-requests', [MotherController::class, 'requestSchool'])->name('school_requests.store');
         Route::get('/notifications/{notificationId}', [MotherController::class, 'openNotification'])->name('notifications.open');
         Route::get('/child/{id}', [MotherController::class, 'showChild'])->name('child_details');
         Route::get('/child/{childId}/notes', [MotherController::class, 'childNotes'])->name('child_notes.index');

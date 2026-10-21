@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\chaldrin;
 use App\Models\MotherChildNote;
+use App\Models\School;
+use App\Models\SchoolMotherRequest;
 use App\Notifications\MotherChildNoteReplyNotification;
 use App\Notifications\MotherChildNoteNotification;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MotherController extends Controller
 {
@@ -17,7 +20,7 @@ class MotherController extends Controller
         // جلب أطفال الأم مع ملاحظاتهم، من الأحدث إلى الأقدم
         $children = chaldrin::where('mother_id', $mother->id)
             ->with([
-                'manager:id,school_name,school_logo,primary_color',
+                'school:id,name,logo,color',
                 'teachers:id,name,status',
                 'dailyVariables' => function ($query) {
                     $query->latest();
@@ -34,6 +37,72 @@ class MotherController extends Controller
             'motherNotifications',
             'unreadNotificationsCount'
         ));
+    }
+
+    public function schoolRequests()
+    {
+        $this->checkMother();
+        $mother = auth()->user();
+        $schoolRequests = $mother->schoolRequests()->with('school:id,name')->latest()->get();
+        $availableSchools = School::whereHas('users', function ($query) {
+            $query->where('role', 'manager')
+                ->where('status', 'approved');
+        })
+            ->whereDoesntHave('motherRequests', function ($query) use ($mother) {
+                $query->where('mother_id', $mother->id)
+                    ->whereIn('status', ['pending', 'approved']);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('mother.school_requests', compact(
+            'mother',
+            'schoolRequests',
+            'availableSchools'
+        ));
+    }
+
+    public function requestSchool(Request $request)
+    {
+        $this->checkMother();
+
+        $validated = $request->validate([
+            'school_id' => ['required', 'integer', Rule::exists('schools', 'id')],
+        ]);
+        $mother = auth()->user();
+        $school = School::whereKey($validated['school_id'])
+            ->whereHas('users', function ($query) {
+                $query->where('role', 'manager')
+                    ->where('status', 'approved');
+            })
+            ->first();
+
+        if (!$school) {
+            return back()->withErrors([
+                'school_id' => 'المدرسة المختارة غير متاحة حاليًا.',
+            ]);
+        }
+
+        $existingRequest = SchoolMotherRequest::where('school_id', $school->id)
+            ->where('mother_id', $mother->id)
+            ->first();
+
+        if ($existingRequest?->status === 'approved') {
+            return back()->with('error', 'تمت الموافقة على انضمامك لهذه المدرسة مسبقًا.');
+        }
+
+        if ($existingRequest?->status === 'pending') {
+            return back()->with('error', 'طلبك لهذه المدرسة ما زال بانتظار موافقة المدير.');
+        }
+
+        SchoolMotherRequest::updateOrCreate(
+            ['school_id' => $school->id, 'mother_id' => $mother->id],
+            ['status' => 'pending']
+        );
+
+        return redirect()
+            ->route('mother.school_requests')
+            ->with('success', 'تم إرسال طلب الانضمام إلى المدرسة بانتظار موافقة المدير.');
     }
 
     public function storeChildNote(Request $request, $childId)
@@ -98,7 +167,7 @@ class MotherController extends Controller
 
         $mother = auth()->user();
         $child = chaldrin::where('mother_id', $mother->id)
-            ->with('manager:id,school_name,school_logo,primary_color')
+            ->with('school:id,name,logo,color')
             ->findOrFail($childId);
         $childNotes = MotherChildNote::where('mother_id', $mother->id)
             ->where('child_id', $child->id)
@@ -146,7 +215,7 @@ class MotherController extends Controller
         $child = chaldrin::where('id', $id)
             ->where('mother_id', $mother->id)
             ->with([
-                'manager:id,school_name,school_logo,primary_color',
+                'school:id,name,logo,color',
                 'teachers:id,name,status',
                 'dailyVariables' => function ($query) {
                     $query->latest();

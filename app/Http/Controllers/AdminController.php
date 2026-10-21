@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\School;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -47,7 +48,25 @@ class AdminController extends Controller
     {
         $this->checkAdmin();
 
-        $manager->update(['status' => 'approved']);
+        $schoolName = $manager->school_name ?: $manager->name;
+        $school = School::firstOrCreate(
+            ['name' => $schoolName],
+            [
+                'logo' => $manager->school_logo,
+                'color' => $manager->primary_color ?: '#2563eb',
+            ]
+        );
+
+        if ($manager->school_name !== null) {
+            User::where('school_name', $manager->school_name)
+                ->whereNull('school_id')
+                ->update(['school_id' => $school->id]);
+        }
+        $manager->update([
+            'school_id' => $school->id,
+            'school_name' => $schoolName,
+            'status' => 'approved',
+        ]);
 
         return back()->with('success', 'تمت الموافقة على حساب المدير بنجاح.');
     }
@@ -79,6 +98,7 @@ class AdminController extends Controller
 
         $deactivatedManagers = User::where('role', 'manager')
             ->where('status', 'deactivated')
+            ->with('school:id,name')
             ->latest()
             ->get();
 

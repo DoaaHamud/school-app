@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\chaldrin;
+use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,11 +14,14 @@ class TeacherAssignmentNotificationTest extends TestCase
 
     public function test_assigning_a_class_notifies_the_teacher_and_repeated_assignment_does_not_duplicate_it(): void
     {
+        $school = School::create(['name' => 'مدرسة الاختبار']);
+        $otherSchool = School::create(['name' => 'مدرسة أخرى']);
         $manager = User::factory()->create([
             'role' => 'manager',
             'username' => 'manager-one',
             'phone' => '15550000011',
             'school_name' => 'مدرسة الاختبار',
+            'school_id' => $school->id,
         ]);
         $mother = User::factory()->create([
             'role' => 'mother',
@@ -30,10 +34,11 @@ class TeacherAssignmentNotificationTest extends TestCase
             'username' => 'teacher-one',
             'phone' => '15550000013',
             'school_name' => $manager->school_name,
+            'school_id' => $school->id,
         ]);
         $child = chaldrin::create([
             'mother_id' => $mother->id,
-            'manager_id' => $manager->id,
+            'school_id' => $school->id,
             'name' => 'ليان',
             'gender' => 'female',
             'Health_status' => 'جيدة',
@@ -43,7 +48,7 @@ class TeacherAssignmentNotificationTest extends TestCase
         ]);
         $secondChild = chaldrin::create([
             'mother_id' => $mother->id,
-            'manager_id' => $manager->id,
+            'school_id' => $school->id,
             'name' => 'آدم',
             'gender' => 'male',
             'Health_status' => 'جيدة',
@@ -56,10 +61,11 @@ class TeacherAssignmentNotificationTest extends TestCase
             'username' => 'manager-other-school',
             'phone' => '15550000015',
             'school_name' => 'مدرسة أخرى',
+            'school_id' => $otherSchool->id,
         ]);
         $otherSchoolChild = chaldrin::create([
             'mother_id' => $mother->id,
-            'manager_id' => $otherManager->id,
+            'school_id' => $otherSchool->id,
             'name' => 'نور',
             'gender' => 'female',
             'Health_status' => 'جيدة',
@@ -123,11 +129,13 @@ class TeacherAssignmentNotificationTest extends TestCase
 
     public function test_assigning_a_class_from_the_teacher_assignment_page_notifies_the_teacher(): void
     {
+        $school = School::create(['name' => 'مدرسة الاختبار']);
         $manager = User::factory()->create([
             'role' => 'manager',
             'username' => 'manager-page',
             'phone' => '15550000021',
             'school_name' => 'مدرسة الاختبار',
+            'school_id' => $school->id,
         ]);
         $mother = User::factory()->create([
             'role' => 'mother',
@@ -140,10 +148,11 @@ class TeacherAssignmentNotificationTest extends TestCase
             'username' => 'teacher-page',
             'phone' => '15550000023',
             'school_name' => $manager->school_name,
+            'school_id' => $school->id,
         ]);
         $child = chaldrin::create([
             'mother_id' => $mother->id,
-            'manager_id' => $manager->id,
+            'school_id' => $school->id,
             'name' => 'آدم',
             'gender' => 'male',
             'Health_status' => 'جيدة',

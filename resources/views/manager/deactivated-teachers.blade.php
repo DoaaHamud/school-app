@@ -2,21 +2,7 @@
 
 @section('content')
 
-<nav class="navbar navbar-expand-lg mb-4 shadow-sm" style="background-color: var(--primary-color);">
-    <div class="container">
-        <a class="navbar-brand text-white fw-bold" href="{{ route('manager.dashboard') }}">
-            {{ auth()->user()->school_name ?? 'المدرسة' }}
-            <span class="d-block small fw-normal">لوحة تحكم المدير</span>
-        </a>
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('manager.profile') }}" class="btn btn-sm text-white border border-light">الملف الشخصي</a>
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-light">تسجيل الخروج</button>
-            </form>
-        </div>
-    </div>
-</nav>
+@include('manager.partials.simple-navbar')
 
 <main class="container my-4" style="max-width: 1100px;">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">

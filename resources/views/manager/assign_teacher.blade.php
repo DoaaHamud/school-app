@@ -79,21 +79,7 @@
         }
     </style>
 
-    <nav class="navbar navbar-expand-lg mb-4 shadow-sm" style="background-color: var(--primary-color);">
-        <div class="container">
-            <a class="navbar-brand text-white fw-bold" href="{{ route('manager.dashboard') }}">
-                {{ auth()->user()->school_name ?? 'المدرسة' }}
-                <span class="d-block small fw-normal">لوحة تحكم المدير</span>
-            </a>
-            <div class="d-flex align-items-center gap-2">
-                <a href="{{ route('manager.profile') }}" class="btn btn-sm text-white border border-light">الملف الشخصي</a>
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-light">تسجيل الخروج</button>
-                </form>
-            </div>
-        </div>
-    </nav>
+    @include('manager.partials.simple-navbar')
 
     <div class="container py-4">
 
@@ -153,17 +139,17 @@
             </div>
         </div>
 
-        {{-- اختيار السنة والصف (تصفية لصفحات الأستاذ المسندة فقط) --}}
+        {{-- اختيار السنة والصف والشعبة (تصفية للمسند لهذا الأستاذ فقط) --}}
         <div class="card filter-card border-0 shadow-sm mb-4">
             <div class="card-body">
                 <h5 class="fw-bold mb-3">
-                    <i class="bi bi-funnel me-1"></i> تحديد الصف المسند للأستاذ
+                    <i class="bi bi-funnel me-1"></i>                     تحديد الصف والشعبة المسندين للأستاذ
                 </h5>
 
                 <form method="GET" action="{{ route('manager.teachers.assign', $teacher->id) }}">
                     <div class="row g-3">
                         {{-- السنة --}}
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">السنة الدراسية</label>
                             <select name="year" class="form-select" onchange="this.form.submit()">
                                 @for($i = date('Y') - 5; $i <= date('Y') + 1; $i++)
@@ -175,9 +161,9 @@
                         </div>
 
                         {{-- الصف (يعرض فقط الصفوف المسندة لهذا الأستاذ) --}}
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">الصفوف المسندة له</label>
-                            <select name="class" class="form-select" onchange="this.form.submit()">
+                            <select name="class" class="form-select" onchange="this.form.section.value=''; this.form.submit()">
                                 @forelse($classes as $class)
                                 <option value="{{ $class }}" {{ $selectedClass == $class ? 'selected' : '' }}>
                                     {{ $class }}
@@ -185,6 +171,17 @@
                                 @empty
                                 <option value="">لا توجد صفوف مسندة لهذا المعلم</option>
                                 @endforelse
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">الشُعَب المسندة له</label>
+                            <select name="section" class="form-select" onchange="this.form.submit()" {{ $sections->isEmpty() ? 'disabled' : '' }}>
+                                <option value="">كل الشُعَب</option>
+                                @foreach($sections as $section)
+                                <option value="{{ $section }}" {{ $selectedSection === $section ? 'selected' : '' }}>
+                                    {{ $section }}
+                                </option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -198,7 +195,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="fw-bold mb-1">
-                            طلاب {{ $selectedClass ?? 'الصف' }}
+                            طلاب {{ $selectedClass ?? 'الصف' }}{{ $selectedSection ? ' / ' . $selectedSection : '' }}
                         </h5>
                         <small class="text-muted">
                             {{ $students->count() }} طالب
@@ -223,7 +220,7 @@
                                         {{ $student->name }}
                                     </div>
                                     <small class="text-muted">
-                                        {{ $student->class }}
+                                        {{ $student->class }}{{ $student->section ? ' / ' . $student->section : '' }}
                                     </small>
                                 </div>
                             </div>

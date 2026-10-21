@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\School;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,12 +13,15 @@ class TeacherRegistrationNotificationTest extends TestCase
 
     public function test_teacher_registration_notifies_only_approved_managers_of_the_selected_school(): void
     {
+        $school = School::create(['name' => 'مدرسة الندى']);
+        $otherSchool = School::create(['name' => 'مدرسة أخرى']);
         $manager = User::factory()->create([
             'role' => 'manager',
             'status' => 'approved',
             'username' => 'manager-school-one',
             'phone' => '15550000031',
             'school_name' => 'مدرسة الندى',
+            'school_id' => $school->id,
         ]);
         $sameSchoolManager = User::factory()->create([
             'role' => 'manager',
@@ -25,6 +29,7 @@ class TeacherRegistrationNotificationTest extends TestCase
             'username' => 'manager-school-two',
             'phone' => '15550000032',
             'school_name' => 'مدرسة الندى',
+            'school_id' => $school->id,
         ]);
         $otherSchoolManager = User::factory()->create([
             'role' => 'manager',
@@ -32,6 +37,7 @@ class TeacherRegistrationNotificationTest extends TestCase
             'username' => 'manager-other-school',
             'phone' => '15550000033',
             'school_name' => 'مدرسة أخرى',
+            'school_id' => $otherSchool->id,
         ]);
 
         $this->get(route('register'))

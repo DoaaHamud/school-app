@@ -33,6 +33,20 @@
         white-space: normal;
         border-radius: 8px;
     }
+
+    .teacher-notification-item .teacher-notification-icon {
+        color: var(--primary-color) !important;
+    }
+
+    .teacher-notification-item,
+    .teacher-notification-item span,
+    .teacher-notification-item small {
+        color: #334155 !important;
+    }
+
+    .teacher-notification-item .notification-message {
+        color: #64748b !important;
+    }
 </style>
 
 <div class="dropdown me-lg-3">
@@ -52,7 +66,7 @@
             <a class="dropdown-item teacher-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
                 href="{{ route('teacher.notifications.open', $notification->id) }}">
                 <span class="d-flex align-items-start gap-2">
-                    <i class="bi {{ ($notification->data['type'] ?? '') === 'mother_child_note' ? 'bi-chat-left-text-fill' : 'bi-person-plus-fill' }} text-primary mt-1"></i>
+                    <i class="bi teacher-notification-icon {{ ($notification->data['type'] ?? '') === 'mother_child_note' ? 'bi-chat-left-text-fill' : 'bi-person-plus-fill' }} mt-1"></i>
                     <span>
                         <span class="d-block">{{ $notification->data['message'] ?? 'تم إسناد طلاب جدد إليكِ.' }}</span>
                         @if(($notification->data['type'] ?? '') === 'mother_child_note')

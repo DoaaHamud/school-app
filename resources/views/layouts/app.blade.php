@@ -1,19 +1,15 @@
+{{-- filepath: c:\Users\VICTUS\Desktop\school\resources\views\layouts\app.blade.php --}}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
     @php
-        $schoolBranding = auth()->user();
-
-        if ($schoolBranding && $schoolBranding->role !== 'manager' && $schoolBranding->school_name) {
-            $schoolBranding = \App\Models\User::where('role', 'manager')
-                ->where('school_name', $schoolBranding->school_name)
-                ->first() ?? $schoolBranding;
-        }
+    $schoolBranding = auth()->user()?->school;
     @endphp
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $schoolBranding->school_name ?? 'رفيق' }}</title>
+    <title>{{ $schoolBranding?->name ?? 'رفيق' }}</title>
 
     <!-- Bootstrap 5 RTL -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
@@ -61,7 +57,6 @@
             color: #334155 !important;
         }
 
-        /* تخصيص الروابط والأيقونات والعناصر لتأخذ اللون الأساسي تلقائياً */
         .text-primary-custom {
             color: var(--primary-color) !important;
         }
@@ -85,7 +80,7 @@
     </style>
 </head>
 
-<body style="--primary-color: {{ $schoolBranding->primary_color ?? '#2563eb' }};">
+<body style="--primary-color: {{ $schoolBranding?->color ?? '#2563eb' }};">
 
     <main>
         @yield('content')
@@ -93,6 +88,7 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         document.querySelectorAll('[data-date-filter]').forEach((dateInput) => {
             const form = dateInput.closest('form');
@@ -126,9 +122,9 @@
                 date.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
 
                 if (
-                    date.getUTCFullYear() !== Number(year)
-                    || date.getUTCMonth() !== Number(month) - 1
-                    || date.getUTCDate() !== Number(day)
+                    date.getUTCFullYear() !== Number(year) ||
+                    date.getUTCMonth() !== Number(month) - 1 ||
+                    date.getUTCDate() !== Number(day)
                 ) {
                     event.preventDefault();
                     dateInput.setCustomValidity('أدخل تاريخًا صحيحًا بصيغة يوم/شهر/سنة.');

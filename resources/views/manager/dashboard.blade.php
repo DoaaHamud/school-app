@@ -31,26 +31,6 @@
         font-weight: bold;
     }
 
-    .manager-notifications-menu {
-        width: min(340px, calc(100vw - 30px));
-        padding: 8px;
-    }
-
-    .manager-notification-item {
-        white-space: normal;
-        border-radius: 8px;
-    }
-
-    .manager-notification-item,
-    .manager-notification-item span,
-    .manager-notification-item small {
-        color: #334155 !important;
-    }
-
-    .manager-notification-item .notification-message {
-        color: #64748b !important;
-    }
-
 </style>
 
 <!-- Navbar المدير الملون بلون التطبيق المختار -->
@@ -101,37 +81,7 @@
             <!-- حساب المدير وزر الخروج -->
             <div class="d-flex align-items-center gap-3 flex-wrap">
 
-                <div class="dropdown">
-                    <button class="btn position-relative d-flex align-items-center gap-2 text-white"
-                        type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="الإشعارات">
-                        <i class="bi bi-bell fs-5"></i>
-                        @if($unreadNotificationsCount > 0)
-                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
-                            {{ $unreadNotificationsCount }}
-                        </span>
-                        @endif
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end manager-notifications-menu">
-                        <li class="dropdown-header fw-bold">الإشعارات</li>
-                        @forelse($managerNotifications as $notification)
-                        <li>
-                            <a class="dropdown-item manager-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
-                                href="{{ route('manager.notifications.open', $notification->id) }}">
-                                <span class="d-flex align-items-start gap-2">
-                                    <i class="bi bi-person-plus-fill text-primary mt-1"></i>
-                                    <span>
-                                        <span class="d-block fw-semibold">{{ $notification->data['teacher_name'] ?? 'معلم جديد' }}</span>
-                                        <span class="notification-message d-block small">{{ $notification->data['message'] ?? 'يوجد طلب انضمام معلم جديد بانتظار المراجعة.' }}</span>
-                                        <small class="text-secondary">{{ $notification->created_at->diffForHumans() }}</small>
-                                    </span>
-                                </span>
-                            </a>
-                        </li>
-                        @empty
-                        <li class="px-3 py-2 small text-muted">لا توجد إشعارات حتى الآن.</li>
-                        @endforelse
-                    </ul>
-                </div>
+                @include('manager.partials.notifications')
 
                 <div class="dropdown">
                     <button class="btn d-flex align-items-center gap-2 border-0 dropdown-toggle py-1 px-2 rounded-3 text-white" style="background: rgba(255,255,255,0.2);" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -237,6 +187,62 @@
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('هل أنت متأكد من رفض طلب المعلم؟')">
+                                        <i class="bi bi-x-lg"></i> رفض
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom-0">
+            <h5 class="card-title m-0 fw-bold" style="color: var(--primary-color);">
+                <i class="bi bi-person-heart ms-2"></i>طلبات انضمام أولياء الأمور
+            </h5>
+        </div>
+        <div class="card-body">
+            @if($pendingMotherRequests->isEmpty())
+            <div class="text-center py-4 text-muted">
+                لا توجد طلبات انضمام معلقة حاليًا.
+            </div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>اسم وليّة الأمر</th>
+                            <th>اسم المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>رقم الهاتف</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pendingMotherRequests as $motherRequest)
+                        <tr>
+                            <td class="fw-bold">{{ $motherRequest->mother->name }}</td>
+                            <td>{{ $motherRequest->mother->username }}</td>
+                            <td>{{ $motherRequest->mother->email }}</td>
+                            <td>{{ $motherRequest->mother->phone }}</td>
+                            <td>
+                                <form action="{{ route('manager.mothers.requests.approve', $motherRequest->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-success btn-sm ms-1">
+                                        <i class="bi bi-check-lg"></i> موافقة
+                                    </button>
+                                </form>
+                                <form action="{{ route('manager.mothers.requests.reject', $motherRequest->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('هل تريد رفض طلب انضمام وليّة الأمر؟')">
                                         <i class="bi bi-x-lg"></i> رفض
                                     </button>
                                 </form>

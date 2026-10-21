@@ -28,7 +28,7 @@
         justify-self: center;
     }
 
-    .assignment-page .class-assignment-card .card-body > div {
+    .assignment-page .class-assignment-card .card-body>div {
         width: 100%;
     }
 
@@ -55,6 +55,9 @@
     }
 
     .assignment-page .assignment-search-menu {
+        top: 100% !important;
+        bottom: auto !important;
+        transform: none !important;
         min-width: 100%;
         max-height: 280px;
         overflow-y: auto;
@@ -62,21 +65,7 @@
     }
 </style>
 
-<nav class="navbar navbar-expand-lg mb-4 shadow-sm" style="background-color: var(--primary-color);">
-    <div class="container">
-        <a class="navbar-brand text-white fw-bold" href="{{ route('manager.dashboard') }}">
-            {{ auth()->user()->school_name ?? 'المدرسة' }}
-            <span class="d-block small fw-normal">لوحة تحكم المدير</span>
-        </a>
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('manager.teachers.index') }}" class="btn btn-sm text-white border border-light">دليل الأساتذة</a>
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                @csrf
-                <button type="submit" class="btn btn-sm btn-light">تسجيل الخروج</button>
-            </form>
-        </div>
-    </div>
-</nav>
+@include('manager.partials.simple-navbar')
 
 <main class="container py-3 assignment-page">
     @if(session('success'))
@@ -132,12 +121,12 @@
             <form action="{{ route('manager.assign.class.quick') }}" method="POST" class="row g-3 align-items-end">
                 @csrf
                 <input type="hidden" name="year" value="{{ $year }}">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">المعلم</label>
                     <div class="dropdown assignment-combobox" id="teacherCombobox">
                         <input type="hidden" name="teacher_id" id="teacherValue" value="{{ old('teacher_id') }}">
                         <button class="form-select text-start" type="button" id="teacherDropdown"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false">
                             <span id="teacherSelectedLabel">-- اختر المعلم أو ابحث عن اسمه --</span>
                         </button>
                         <div class="dropdown-menu assignment-search-menu" aria-labelledby="teacherDropdown">
@@ -155,19 +144,19 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">الصف الدراسي</label>
                     <div class="dropdown assignment-combobox" id="classCombobox">
                         <input type="hidden" name="class" id="classValue" value="{{ old('class') }}">
                         <button class="form-select text-start" type="button" id="classDropdown"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false">
                             <span id="classSelectedLabel">-- اختر الصف أو ابحث عن اسمه --</span>
                         </button>
                         <div class="dropdown-menu assignment-search-menu" aria-labelledby="classDropdown">
                             <input id="classSearch" type="search" class="form-control mb-2"
                                 placeholder="ابحث عن اسم الصف..." autocomplete="off" aria-label="ابحث عن اسم الصف">
                             <div id="classOptions" class="d-grid gap-1">
-                                @foreach($classAssignments as $className => $teachers)
+                                @foreach($availableClasses as $className)
                                 <button type="button" class="dropdown-item rounded-2 assignment-option"
                                     data-value="{{ $className }}" data-label="{{ $className }}">
                                     {{ $className }}
@@ -178,13 +167,36 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">الشعبة</label>
+                    <div class="dropdown assignment-combobox" id="sectionCombobox">
+                        <input type="hidden" name="section" id="sectionValue" value="{{ old('section') }}">
+                        <button class="form-select text-start" type="button" id="sectionDropdown"
+                            data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false">
+                            <span id="sectionSelectedLabel">-- اختر الشعبة أو ابحث عن اسمها --</span>
+                        </button>
+                        <div class="dropdown-menu assignment-search-menu" aria-labelledby="sectionDropdown">
+                            <input id="sectionSearch" type="search" class="form-control mb-2"
+                                placeholder="ابحث عن اسم الشعبة..." autocomplete="off" aria-label="ابحث عن اسم الشعبة">
+                            <div id="sectionOptions" class="d-grid gap-1">
+                                @foreach($availableSections as $sectionName)
+                                <button type="button" class="dropdown-item rounded-2 assignment-option"
+                                    data-value="{{ $sectionName }}" data-label="{{ $sectionName }}">
+                                    {{ $sectionName }}
+                                </button>
+                                @endforeach
+                            </div>
+                            <small id="sectionSearchEmpty" class="form-text text-muted d-none">لا توجد شعبة بهذا الاسم.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-primary fw-bold w-100">
                         <i class="bi bi-check-lg ms-1"></i> تعيين
                     </button>
                 </div>
                 <div class="col-12">
-                    <small class="text-muted">سيتم تعيين جميع طلاب الصف المختار لهذا المعلم تلقائيًا.</small>
+                    <small class="text-muted">سيتم تعيين جميع طلاب الصف والشعبة المختارين لهذا المعلم تلقائيًا.</small>
                 </div>
             </form>
             @endif
@@ -193,13 +205,18 @@
 
     <section aria-labelledby="classAssignmentsTitle">
         <h2 id="classAssignmentsTitle" class="h5 fw-bold mb-3">المعلمون المسؤولون عن الصفوف — {{ $year }}</h2>
-        @forelse($classAssignments as $className => $teachers)
+        @forelse($classAssignments as $assignment)
+        @php
+        $className = $assignment['className'];
+        $sectionName = $assignment['sectionName'];
+        $teachers = $assignment['teachers'];
+        @endphp
         <article class="card class-assignment-card border-0 shadow-sm rounded-4 mb-3">
             <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3 px-4">
                 <div>
                     <h3 class="h6 fw-bold mb-2">
                         <i class="bi bi-mortarboard-fill ms-1" style="color: var(--primary-color);"></i>
-                        الصف {{ $className }}
+                        {{ $className }} — {{ $sectionName ?: 'غير محددة' }}
                     </h3>
                     @forelse($teachers as $teacher)
                     <div class="teacher-assignment-row">
@@ -210,11 +227,12 @@
                             @endif
                         </span>
                         <form action="{{ route('manager.unassign.class.quick') }}" method="POST" class="m-0"
-                            onsubmit="return confirm('هل تريد إلغاء تعيين {{ $teacher->name }} من الصف {{ $className }}؟ ستبقى بيانات الطلاب وتقاريرهم محفوظة.');">
+                            onsubmit="return confirm('هل تريد إلغاء تعيين {{ $teacher->name }} من الصف {{ $className }} والشعبة {{ $sectionName }}؟ ستبقى بيانات الطلاب وتقاريرهم محفوظة.');">
                             @csrf
                             @method('DELETE')
                             <input type="hidden" name="teacher_id" value="{{ $teacher->id }}">
                             <input type="hidden" name="class" value="{{ $className }}">
+                            <input type="hidden" name="section" value="{{ $sectionName }}">
                             <input type="hidden" name="year" value="{{ $year }}">
                             <button type="submit" class="btn btn-sm btn-unassign">
                                 <i class="bi bi-person-dash ms-1"></i> إلغاء التعيين
@@ -280,7 +298,11 @@
                 }
             });
 
-            return { selectedValue, searchInput, dropdown };
+            return {
+                selectedValue,
+                searchInput,
+                dropdown
+            };
         };
 
         const teacherCombobox = setupAssignmentCombobox({
@@ -299,24 +321,36 @@
             searchId: 'classSearch',
             emptyId: 'classSearchEmpty'
         });
+        const sectionCombobox = setupAssignmentCombobox({
+            containerId: 'sectionCombobox',
+            toggleId: 'sectionDropdown',
+            valueId: 'sectionValue',
+            labelId: 'sectionSelectedLabel',
+            searchId: 'sectionSearch',
+            emptyId: 'sectionSearchEmpty'
+        });
 
         document.querySelector('#teacherCombobox').closest('form').addEventListener('submit', (event) => {
-            const invalidCombobox = [teacherCombobox, classCombobox]
-                .find(({ selectedValue }) => !selectedValue.value);
+            const invalidCombobox = [teacherCombobox, classCombobox, sectionCombobox]
+                .find(({
+                    selectedValue
+                }) => !selectedValue.value);
 
             if (invalidCombobox) {
                 event.preventDefault();
                 invalidCombobox.searchInput.setCustomValidity(
-                    invalidCombobox.searchInput.id === 'teacherSearch'
-                        ? 'اختاري اسم المعلم من القائمة.'
-                        : 'اختاري الصف الدراسي من القائمة.'
+                    invalidCombobox.searchInput.id === 'teacherSearch' ?
+                    'اختاري اسم المعلم من القائمة.' :
+                    invalidCombobox.searchInput.id === 'classSearch' ?
+                    'اختاري الصف الدراسي من القائمة.' :
+                    'اختاري الشعبة من القائمة.'
                 );
                 invalidCombobox.dropdown.show();
                 invalidCombobox.searchInput.reportValidity();
             }
         });
 
-        [teacherCombobox.searchInput, classCombobox.searchInput].forEach((searchInput) => {
+        [teacherCombobox.searchInput, classCombobox.searchInput, sectionCombobox.searchInput].forEach((searchInput) => {
             searchInput.addEventListener('input', () => searchInput.setCustomValidity(''));
         });
     });

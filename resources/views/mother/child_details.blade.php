@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>تفاصيل {{ $child->name }} - {{ $child->manager?->school_name ?? 'روضتي' }}</title>
+    <title>تفاصيل {{ $child->name }} - {{ $child->school?->name ?? 'روضتي' }}</title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
@@ -401,11 +401,12 @@
 </head>
 
 @php
-    $schoolColor = $child->manager?->primary_color;
-    if (!is_string($schoolColor) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $schoolColor)) {
-        $schoolColor = '#2563eb';
-    }
+$schoolColor = $child->school?->color;
+if (!is_string($schoolColor) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $schoolColor)) {
+$schoolColor = '#2563eb';
+}
 @endphp
+
 <body style="--school-color: {{ $schoolColor }};">
 
     <!-- Navbar -->
@@ -416,11 +417,11 @@
             <!-- حاوية الشعار -->
             <div class="school-brand">
                 <img class="school-logo"
-                    src="{{ $child->manager?->school_logo ? asset('storage/' . $child->manager->school_logo) : asset('images/logo.jpeg') }}"
-                    alt="شعار {{ $child->manager?->school_name ?? 'روضتي' }}">
+                    src="{{ $child->school?->logo ? asset('storage/' . $child->school->logo) : asset('images/logo.jpeg') }}"
+                    alt="شعار {{ $child->school?->name ?? 'روضتي' }}">
                 <span class="school-brand-name">
-                    {{ $child->manager?->school_name ?? 'روضتي' }}
-                    <small class="school-brand-caption">تقارير الطفل</small>
+                    {{ $child->school?->name ?? 'روضتي' }}
+                    <small class="school-brand-caption">تقارير الطالب</small>
                 </span>
             </div>
 
@@ -586,7 +587,7 @@
 
                     <div class="child-subtitle">
 
-                        معلومات الطفل والتقارير اليومية
+                        معلومات الطالب والتقارير اليومية
 
                     </div>
 
@@ -621,24 +622,6 @@
 
                 </div>
 
-
-                <div class="info-box">
-
-                    <div class="info-label">
-                        العمر
-                    </div>
-
-                    <div class="info-value">
-
-                        <i class="bi bi-calendar3"></i>
-
-                        {{ $child->age ?? 'غير محدد' }}
-
-                    </div>
-
-                </div>
-
-
                 <div class="info-box">
 
                     <div class="info-label">
@@ -655,6 +638,37 @@
 
                 </div>
 
+                <div class="info-box">
+
+                    <div class="info-label">
+                        الشعبة
+                    </div>
+
+                    <div class="info-value">
+
+                        <i class="bi bi-people"></i>
+
+                        {{ $child->section ?? 'غير محددة' }}
+
+                    </div>
+
+                </div>
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        العمر
+                    </div>
+
+                    <div class="info-value">
+
+                        <i class="bi bi-calendar3"></i>
+
+                        {{ $child->age ?? 'غير محدد' }}
+
+                    </div>
+
+                </div>
 
                 <div class="info-box">
 
@@ -695,10 +709,10 @@
 
         <section class="child-card" aria-labelledby="sendChildNoteTitle">
             <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
-            <h3 id="sendChildNoteTitle" class="section-title">
-                <i class="bi bi-chat-left-text"></i>
-                إرسال ملاحظة للمعلمين
-            </h3>
+                <h3 id="sendChildNoteTitle" class="section-title">
+                    <i class="bi bi-chat-left-text"></i>
+                    إرسال ملاحظة للمعلمين
+                </h3>
                 <a href="{{ route('mother.child_notes.index', $child->id) }}" class="btn child-notes-link">
                     <i class="bi bi-chat-square-text ms-1"></i>
                     ملاحظاتي وردود المعلمات
@@ -711,7 +725,7 @@
                 <select id="childTeacher" name="teacher_id" class="form-select mb-3">
                     <option value="">جميع المعلمين</option>
                     @foreach($child->teachers as $teacher)
-                    <option value="{{ $teacher->id }}" @selected(old('teacher_id') == $teacher->id)>
+                    <option value="{{ $teacher->id }}" @selected(old('teacher_id')==$teacher->id)>
                         {{ $teacher->name }}
                     </option>
                     @endforeach
@@ -732,100 +746,114 @@
         </section>
 
 
-        <!-- Daily reports -->
+        {{-- استبدلي قسم Daily reports الحالي بهذا القسم --}}
+
+        @php
+        $dailyReports = $child->dailyVariables
+        ->sortByDesc('report_date')
+        ->values();
+
+        $latestReport = $dailyReports->first();
+        $olderReports = $dailyReports->slice(1)->values();
+        @endphp
 
         <h3 class="section-title">
-
             <i class="bi bi-journal-text"></i>
-
             التقارير اليومية
-
         </h3>
 
+        @if($latestReport)
+        <details class="report-card p-0 overflow-hidden" id="dailyReportsCard">
+            <summary style="cursor: pointer; list-style: none; padding: 20px;">
+                <div class="report-header mb-0">
+                    <div>
+                        <div class="report-topic">
+                            <i class="bi bi-bookmark"></i>
+                            {{ $latestReport->topic }}
+                        </div>
+                        <div class="report-date mt-2 mb-0">
+                            <i class="bi bi-calendar3"></i>
+                            أحدث تقرير:
+                            {{ \Carbon\Carbon::parse($latestReport->report_date)->format('Y-m-d H:i') }}
+                        </div>
+                    </div>
 
-        @forelse($child->dailyVariables as $daily)
-
-        <div class="report-card">
-
-            <div class="report-header">
-
-                <div class="report-topic">
-
-                    <i class="bi bi-bookmark"></i>
-
-                    {{ $daily->topic }}
-
+                    <span class="result-badge">
+                        <i class="bi bi-bar-chart"></i>
+                        النتيجة: {{ $latestReport->result ?? 'غير محددة' }}
+                        <i class="bi bi-chevron-down me-1"></i>
+                    </span>
                 </div>
+            </summary>
 
-                <span class="result-badge">
+            <div id="olderReportsList" style="padding: 0 20px 20px;">
+                @foreach($olderReports as $daily)
+                <div class="report-entry border-top py-3" @if($loop->index >= 10) hidden @endif>
+                    <div class="report-header">
+                        <div class="report-topic">
+                            <i class="bi bi-bookmark"></i>
+                            {{ $daily->topic }}
+                        </div>
+                        <span class="result-badge">
+                            <i class="bi bi-bar-chart"></i>
+                            النتيجة: {{ $daily->result ?? 'غير محددة' }}
+                        </span>
+                    </div>
 
-                    <i class="bi bi-bar-chart"></i>
+                    <div class="report-date">
+                        <i class="bi bi-calendar3"></i>
+                        تاريخ التقرير:
+                        {{ \Carbon\Carbon::parse($daily->report_date)->format('Y-m-d H:i') }}
+                    </div>
 
-                    النتيجة:
-                    {{ $daily->result ?? 'غير محددة' }}
-
-                </span>
-
+                    <div class="report-notes {{ $daily->notes ? '' : 'text-muted' }}">
+                        @if($daily->notes)
+                        <strong>
+                            <i class="bi bi-chat-left-text"></i>
+                            ملاحظات المعلم:
+                        </strong>
+                        {{ $daily->notes }}
+                        @else
+                        لا توجد ملاحظات لهذا التقرير.
+                        @endif
+                    </div>
+                </div>
+                @endforeach
             </div>
 
-
-            <div class="report-date">
-
-                <i class="bi bi-calendar3"></i>
-
-                تاريخ التقرير:
-
-                {{ \Carbon\Carbon::parse($daily->report_date)->format('Y-m-d H:i') }}
-
+            @if($olderReports->count() > 10)
+            <div class="text-center pb-3">
+                <button type="button" class="btn btn-outline-primary" id="loadMoreReports">
+                    تحميل المزيد
+                </button>
             </div>
-
-
-            @if($daily->notes)
-
-            <div class="report-notes">
-
-                <strong>
-                    <i class="bi bi-chat-left-text"></i>
-                    ملاحظات المعلم:
-                </strong>
-
-                {{ $daily->notes }}
-
-            </div>
-
-            @else
-
-            <div class="report-notes text-muted">
-
-                لا توجد ملاحظات لهذا التقرير.
-
-            </div>
-
             @endif
-
-        </div>
-
-        @empty
-
+        </details>
+        @else
         <div class="empty-reports">
-
             <i class="bi bi-journal-x"></i>
-
-            <h5 class="mt-3">
-
-                لا توجد تقارير يومية
-
-            </h5>
-
-            <p class="mb-0">
-
-                لم تتم إضافة أي تقارير لهذا الطفل حتى الآن.
-
-            </p>
-
+            <h5 class="mt-3">لا توجد تقارير يومية</h5>
+            <p class="mb-0">لم تتم إضافة أي تقارير لهذا الطفل حتى الآن.</p>
         </div>
+        @endif
 
-        @endforelse
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const button = document.getElementById('loadMoreReports');
+                const list = document.getElementById('olderReportsList');
+
+                if (!button || !list) return;
+
+                button.addEventListener('click', function() {
+                    const hiddenReports = [...list.querySelectorAll('.report-entry[hidden]')];
+                    hiddenReports.slice(0, 10).forEach(report => report.hidden = false);
+
+                    if (!list.querySelector('.report-entry[hidden]')) {
+                        button.remove();
+                    }
+                });
+            });
+        </script>
 
     </main>
 

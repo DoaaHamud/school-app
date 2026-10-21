@@ -60,6 +60,7 @@
 
             <!-- Manager Account -->
             <div class="d-flex align-items-center gap-3 flex-wrap">
+                @include('manager.partials.notifications')
                 <div class="dropdown">
                     <button class="btn d-flex align-items-center gap-2 border-0 dropdown-toggle py-1 px-2 rounded-3 text-white" style="background: rgba(255,255,255,0.2);" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="rounded-circle d-flex align-items-center justify-content-center bg-white" style="width: 36px; height: 36px; color: var(--primary-color);">
@@ -129,7 +130,7 @@
         <div class="p-3">
             <form method="GET" action="{{ route('manager.students') }}">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label fw-semibold text-secondary small">اسم الطالب</label>
                         <input type="text" name="search" class="form-control" placeholder="ابحث باسم الطالب..." value="{{ $search ?? '' }}">
                     </div>
@@ -146,7 +147,19 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-secondary small">الشعبة</label>
+                        <select name="section" class="form-select">
+                            <option value="">-- كل الشُعَب --</option>
+                            @foreach($sections as $sectionOption)
+                            <option value="{{ $sectionOption }}" {{ ($selectedSection ?? '') === $sectionOption ? 'selected' : '' }}>
+                                {{ $sectionOption }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
                         <label class="form-label fw-semibold text-secondary small">السنة الدراسية</label>
                         <input type="number" name="year" class="form-control" value="{{ $year ?? date('Y') }}">
                     </div>
@@ -162,12 +175,18 @@
     </div>
 
     <!-- Students Grouped By Classes -->
-    @forelse($groupedStudents as $className => $classStudents)
+    @forelse($groupedStudents as $classGroup)
+    @php
+        $className = $classGroup['className'];
+        $sectionName = $classGroup['sectionName'];
+        $classStudents = $classGroup['students'];
+    @endphp
     <div class="task-card rounded-4 border shadow-sm mb-4 overflow-hidden" style="background: #ffffff;">
         <!-- Header الخاص بالصف (شامل زر العلامات والملاحظات بالموقع الأصلي المظبوط) -->
         <div class="p-3 d-flex align-items-center justify-content-between flex-wrap gap-2 text-white" style="background-color: var(--primary-color) !important;">
             <h2 class="h6 m-0 fw-bold text-white d-flex align-items-center gap-2">
                 <i class="bi bi-mortarboard-fill"></i> الصف: {{ $className ?: 'غير محدد' }}
+                <span>— الشعبة: {{ $sectionName ?: 'غير محددة' }}</span>
             </h2>
             <div class="d-flex gap-2">
                 <a href="{{ route('manager.classes.grades', $className) }}" class="btn btn-sm btn-light fw-bold px-3 py-1 text-primary d-inline-flex align-items-center gap-1" style="color: var(--primary-color) !important; border-radius: 8px; font-size: 13px;">

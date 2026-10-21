@@ -4,9 +4,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\School;
+use App\Models\SchoolMotherRequest;
 use Illuminate\Http\Request;
 use App\Models\chaldrin;
 use App\Notifications\TeacherAssignmentNotification;
+use Illuminate\Validation\Rule;
 
 class ManagerController extends Controller
 {
@@ -18,26 +21,34 @@ class ManagerController extends Controller
         }
     }
 
+    private function schoolId(): int
+    {
+        $schoolId = auth()->user()->school_id;
+        abort_if($schoolId === null, 409, 'لا توجد مدرسة مرتبطة بهذا الحساب.');
+
+        return $schoolId;
+    }
+
     // 1. لوحة تحكم المدير
     public function dashboard(Request $request)
     {
         $this->checkManager();
-        $manager = auth()->user();
-        $managerNotifications = $manager->notifications()->latest()->take(5)->get();
-        $unreadNotificationsCount = $manager->unreadNotifications()->count();
+        $schoolId = $this->schoolId();
 
         // طلبات المعلمين المعلقة
         $pendingTeachers = User::where('role', 'teacher')
             ->where('status', 'pending')
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->latest()
             ->get();
 
-        return view('manager.dashboard', compact(
-            'pendingTeachers',
-            'managerNotifications',
-            'unreadNotificationsCount'
-        ));
+        $pendingMotherRequests = SchoolMotherRequest::where('school_id', $schoolId)
+            ->where('status', 'pending')
+            ->with('mother:id,name,username,email,phone')
+            ->latest()
+            ->get();
+
+        return view('manager.dashboard', compact('pendingTeachers', 'pendingMotherRequests'));
     }
 
     public function teacherAssignments(Request $request)
@@ -47,31 +58,60 @@ class ManagerController extends Controller
             'year' => 'sometimes|integer|min:2000|max:2100',
         ]);
 
-        $manager = auth()->user();
+        $schoolId = $this->schoolId();
+        $school = School::findOrFail($schoolId);
         $year = (int) $request->input('year', date('Y'));
+        $availableClasses = collect($this->configuredSchoolOptions($school->classes))
+            ->unique(fn ($class) => $this->normalizeSchoolOption($class))
+            ->values();
+        $availableSections = collect($this->configuredSchoolOptions($school->sections))
+            ->unique(fn ($section) => $this->normalizeSchoolOption($section))
+            ->values();
         $approvedTeachers = User::where('role', 'teacher')
             ->where('status', 'approved')
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $classAssignments = chaldrin::where('manager_id', $manager->id)
+        $students = chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $year)
             ->whereNotNull('class')
-            ->with(['teachers' => function ($query) use ($manager) {
-                $query->where('users.school_name', $manager->school_name)
+            ->with(['teachers' => function ($query) use ($schoolId) {
+                $query->where('users.school_id', $schoolId)
                     ->where('users.role', 'teacher')
                     ->whereIn('users.status', ['approved', 'deactivated'])
                     ->orderBy('users.name');
             }])
-            ->get()
-            ->groupBy('class')
-            ->map(fn ($students) => $students
-                ->flatMap(fn ($student) => $student->teachers)
-                ->unique('id')
-                ->sortBy('name')
-                ->values())
-            ->sortBy(function ($teachers, $className) {
+            ->get();
+        $classAssignments = $students
+            ->groupBy(fn ($student) => json_encode(
+                [
+                    $this->normalizeSchoolOption($student->class),
+                    $this->normalizeSchoolOption($student->section),
+                ],
+                JSON_UNESCAPED_UNICODE
+            ))
+            ->map(function ($groupStudents) use ($availableClasses, $availableSections) {
+                $firstStudent = $groupStudents->first();
+                $normalizedClass = $this->normalizeSchoolOption($firstStudent->class);
+                $normalizedSection = $this->normalizeSchoolOption($firstStudent->section);
+
+                return [
+                    'className' => $availableClasses->first(
+                        fn ($class) => $this->normalizeSchoolOption($class) === $normalizedClass
+                    ) ?? $firstStudent->class,
+                    'sectionName' => $availableSections->first(
+                        fn ($section) => $this->normalizeSchoolOption($section) === $normalizedSection
+                    ) ?? $firstStudent->section,
+                    'teachers' => $groupStudents
+                        ->flatMap(fn ($student) => $student->teachers)
+                        ->unique('id')
+                        ->sortBy('name')
+                        ->values(),
+                ];
+            })
+            ->sortBy(function ($assignment) {
+                $className = $assignment['className'];
                 $priority = match (true) {
                     str_contains($className, 'الأول'), str_contains($className, 'الاول') => 1,
                     str_contains($className, 'الثاني') => 2,
@@ -79,13 +119,15 @@ class ManagerController extends Controller
                     default => 4,
                 };
 
-                return sprintf('%d-%s', $priority, $className);
+                return sprintf('%02d-%s-%s', $priority, $className, $assignment['sectionName'] ?? '');
             });
 
         return view('manager.teacher-assignments', compact(
             'year',
             'approvedTeachers',
-            'classAssignments'
+            'classAssignments',
+            'availableClasses',
+            'availableSections'
         ));
     }
 
@@ -106,29 +148,49 @@ class ManagerController extends Controller
     public function assignClassQuickStore(Request $request)
     {
         $this->checkManager();
+        $school = School::findOrFail($this->schoolId());
+        $classes = $this->configuredSchoolOptions($school->classes);
+        $sections = $this->configuredSchoolOptions($school->sections);
 
         $request->validate([
             'teacher_id' => 'required|exists:users,id',
-            'year' => 'required|integer',
-            'class' => 'required|string',
+            'year' => 'required|integer|min:2000|max:2100',
+            'class' => ['required', 'string', Rule::in($classes)],
+            'section' => ['required', 'string', Rule::in($sections)],
         ]);
 
-        $manager = auth()->user();
+        $schoolId = $this->schoolId();
         $teacher = User::where('role', 'teacher')
             ->where('status', 'approved')
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($request->teacher_id);
 
-        // جلب طلاب الصف المحدد التابعين لهذه المدرسة فقط
-        $classStudentIds = chaldrin::whereYear('created_at', $request->year)
-            ->where('manager_id', $manager->id)
-            ->where('class', $request->class)
+        $schoolStudents = chaldrin::where('school_id', $schoolId)
+            ->whereYear('created_at', $request->year)
+            ->get(['id', 'class', 'section']);
+        $classAliases = $schoolStudents
+            ->filter(fn ($student) => $this->normalizeSchoolOption($student->class) === $this->normalizeSchoolOption($request->class))
+            ->pluck('class')
+            ->unique()
+            ->values()
+            ->all();
+        $sectionAliases = $schoolStudents
+            ->filter(fn ($student) => $this->normalizeSchoolOption($student->section) === $this->normalizeSchoolOption($request->section))
+            ->pluck('section')
+            ->unique()
+            ->values()
+            ->all();
+
+        $classStudentIds = chaldrin::where('school_id', $schoolId)
+            ->whereYear('created_at', $request->year)
+            ->whereIn('class', $classAliases ?: [$request->class])
+            ->whereIn('section', $sectionAliases ?: [$request->section])
             ->pluck('id');
 
         if ($classStudentIds->isEmpty()) {
             return back()
                 ->withInput()
-                ->withErrors(['class' => 'لا يوجد طلاب في الصف المحدد لهذه السنة الدراسية.']);
+                ->withErrors(['class' => 'لا يوجد طلاب في الصف والشعبة المحددين لهذه السنة الدراسية.']);
         }
 
         // ربط المعلم بطلاب الصف
@@ -136,12 +198,12 @@ class ManagerController extends Controller
 
         if ($assignment['attached'] !== []) {
             $teacher->notify(new TeacherAssignmentNotification(
-                $request->class,
+                $request->class . ' — ' . $request->section,
                 count($assignment['attached'])
             ));
         }
 
-        return back()->with('success', 'تم تعيين المعلم للصف بنجاح.');
+        return back()->with('success', 'تم تعيين المعلم للصف والشعبة بنجاح.');
     }
 
     public function unassignClassQuickStore(Request $request)
@@ -150,46 +212,70 @@ class ManagerController extends Controller
 
         $request->validate([
             'teacher_id' => 'required|exists:users,id',
-            'year' => 'required|integer',
+            'year' => 'required|integer|min:2000|max:2100',
             'class' => 'required|string',
+            'section' => 'nullable|string',
         ]);
 
-        $manager = auth()->user();
+        $schoolId = $this->schoolId();
         $teacher = User::where('role', 'teacher')
             ->whereIn('status', ['approved', 'deactivated'])
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($request->teacher_id);
 
-        $classStudentIds = chaldrin::where('manager_id', $manager->id)
+        $schoolStudents = chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $request->year)
-            ->where('class', $request->class)
+            ->get(['class', 'section']);
+        $normalizedClass = $this->normalizeSchoolOption($request->class);
+        $classAliases = $schoolStudents
+            ->filter(fn ($student) => $this->normalizeSchoolOption($student->class) === $normalizedClass)
+            ->pluck('class')
+            ->unique()
+            ->values()
+            ->all();
+
+        $classStudentQuery = chaldrin::where('school_id', $schoolId)
+            ->whereYear('created_at', $request->year)
+            ->whereIn('class', $classAliases ?: [$request->class])
             ->whereHas('teachers', function ($query) use ($teacher) {
                 $query->where('users.id', $teacher->id);
-            })
-            ->pluck('chaldrins.id');
+            });
+        if ($request->filled('section')) {
+            $normalizedSection = $this->normalizeSchoolOption($request->section);
+            $sectionAliases = $schoolStudents
+                ->filter(fn ($student) => $this->normalizeSchoolOption($student->section) === $normalizedSection)
+                ->pluck('section')
+                ->unique()
+                ->values()
+                ->all();
+            $classStudentQuery->whereIn('section', $sectionAliases ?: [$request->section]);
+        } else {
+            $classStudentQuery->whereNull('section');
+        }
+        $classStudentIds = $classStudentQuery->pluck('chaldrins.id');
 
         if ($classStudentIds->isEmpty()) {
             return back()
                 ->withInput()
-                ->withErrors(['unassignment' => 'لا يوجد تعيين لهذا المعلم في الصف المحدد لهذه السنة الدراسية.']);
+                ->withErrors(['unassignment' => 'لا يوجد تعيين لهذا المعلم في الصف والشعبة المحددين لهذه السنة الدراسية.']);
         }
 
         $teacher->childrenAsTeacher()->detach($classStudentIds->all());
 
         return redirect()
             ->route('manager.teacher-assignments', ['year' => $request->year])
-            ->with('success', 'تم إلغاء تعيين المعلم من الصف بنجاح، مع بقاء الطلاب والتقارير محفوظة.');
+            ->with('success', 'تم إلغاء تعيين المعلم من الصف والشعبة بنجاح، مع بقاء الطلاب والتقارير محفوظة.');
     }
 
     // 2. الموافقة على طلب معلم
     public function approveTeacher($id)
     {
         $this->checkManager();
+        $schoolId = $this->schoolId();
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'pending')
-            ->whereNotNull('school_name')
-            ->where('school_name', auth()->user()->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($id);
 
         $teacher->update([
@@ -206,11 +292,11 @@ class ManagerController extends Controller
     public function rejectTeacher($id)
     {
         $this->checkManager();
+        $schoolId = $this->schoolId();
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'pending')
-            ->whereNotNull('school_name')
-            ->where('school_name', auth()->user()->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($id);
 
         $teacher->delete();
@@ -221,13 +307,46 @@ class ManagerController extends Controller
         );
     }
 
+    public function approveMotherRequest($requestId)
+    {
+        $this->checkManager();
+        $schoolId = $this->schoolId();
+
+        $motherRequest = SchoolMotherRequest::where('school_id', $schoolId)
+            ->where('status', 'pending')
+            ->findOrFail($requestId);
+
+        abort_if($motherRequest->mother?->role !== 'mother', 404);
+
+        $motherRequest->update(['status' => 'approved']);
+
+        return back()->with('success', 'تمت الموافقة على انضمام وليّة الأمر للمدرسة، وأصبحت متاحة للمعلمات.');
+    }
+
+    public function rejectMotherRequest($requestId)
+    {
+        $this->checkManager();
+        $schoolId = $this->schoolId();
+
+        $motherRequest = SchoolMotherRequest::where('school_id', $schoolId)
+            ->where('status', 'pending')
+            ->findOrFail($requestId);
+
+        abort_if($motherRequest->mother?->role !== 'mother', 404);
+
+        $motherRequest->update(['status' => 'rejected']);
+
+        return back()->with('success', 'تم رفض طلب وليّة الأمر.');
+    }
+
     public function deactivateTeacher($id)
     {
         $this->checkManager();
+        $schoolId = $this->schoolId();
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'approved')
-            ->where('school_name', auth()->user()->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($id);
 
         $teacher->update(['status' => 'deactivated']);
@@ -238,10 +357,11 @@ class ManagerController extends Controller
     public function deactivatedTeachers()
     {
         $this->checkManager();
+        $schoolId = $this->schoolId();
 
         $teachers = User::where('role', 'teacher')
             ->where('status', 'deactivated')
-            ->where('school_name', auth()->user()->school_name)
+            ->where('school_id', $schoolId)
             ->latest()
             ->get();
 
@@ -251,10 +371,11 @@ class ManagerController extends Controller
     public function reactivateTeacher($id)
     {
         $this->checkManager();
+        $schoolId = $this->schoolId();
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'deactivated')
-            ->where('school_name', auth()->user()->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($id);
 
         $teacher->update(['status' => 'approved']);
@@ -268,10 +389,12 @@ class ManagerController extends Controller
     public function showClassStudents(Request $request, $className)
     {
         $this->checkManager();
+        $schoolId = $this->schoolId();
 
         $year = $request->get('year', date('Y'));
 
-        $students = chaldrin::where('class', $className)
+        $students = chaldrin::where('school_id', $schoolId)
+            ->where('class', $className)
             ->whereYear('created_at', $year)
             ->with([
                 'dailyVariables',
@@ -299,46 +422,71 @@ class ManagerController extends Controller
     public function assignTeacherForm(Request $request, $teacherId)
     {
         $this->checkManager();
-
-        $manager = auth()->user();
+        $schoolId = $this->schoolId();
 
         $teacher = User::where('role', 'teacher')
             ->where('status', 'approved')
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->findOrFail($teacherId);
 
         $year = $request->get('year', date('Y'));
 
-        // جلب الصفوف المسندة لهذا الأستاذ فقط في هذه السنة
-        $classes = chaldrin::where('manager_id', $manager->id)
+        $assignedStudents = fn () => chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $year)
             ->whereHas('teachers', function ($q) use ($teacherId) {
                 $q->where('users.id', $teacherId);
-            })
+            });
+
+        // جلب الصفوف والشعب المسندة لهذا الأستاذ فقط في هذه السنة
+        $classes = $assignedStudents()
             ->select('class')
             ->distinct()
-            ->pluck('class');
+            ->orderBy('class')
+            ->pluck('class')
+            ->filter()
+            ->values();
 
         // الصف المحدد (افتراضياً أول صف مسند للمعلم)
-        $selectedClass = $request->get('class', $classes->first());
+        $requestedClass = $request->input('class');
+        $selectedClass = $classes->contains($requestedClass) ? $requestedClass : $classes->first();
+        $sectionAliases = $selectedClass
+            ? $assignedStudents()
+                ->where('class', $selectedClass)
+                ->whereNotNull('section')
+                ->select('section')
+                ->distinct()
+                ->orderBy('section')
+                ->pluck('section')
+                ->groupBy(fn ($section) => $this->normalizeSchoolOption($section))
+            : collect();
+        $requestedSection = $request->input('section');
+        $selectedSectionKey = $requestedSection !== null
+            ? $this->normalizeSchoolOption($requestedSection)
+            : null;
+        $sections = $sectionAliases->map(fn ($aliases) => $aliases->first())->values();
+        $selectedSection = $selectedSectionKey !== null && $sectionAliases->has($selectedSectionKey)
+            ? $sectionAliases->get($selectedSectionKey)->first()
+            : '';
+        $selectedSectionAliases = $selectedSection !== ''
+            ? $sectionAliases->get($this->normalizeSchoolOption($selectedSection), collect())->values()->all()
+            : [];
 
         // عرض طلاب الصف المحدد المسندين لهذا المعلم فقط
-        $students = chaldrin::where('manager_id', $manager->id)
-            ->whereYear('created_at', $year)
-            ->whereHas('teachers', function ($q) use ($teacherId) {
-                $q->where('users.id', $teacherId);
-            })
-            ->when($selectedClass, function ($query) use ($selectedClass) {
-                $query->where('class', $selectedClass);
-            })
-            ->get();
+        $students = $selectedClass
+            ? $assignedStudents()
+                ->where('class', $selectedClass)
+                ->when($selectedSection !== '', fn ($query) => $query->whereIn('section', $selectedSectionAliases))
+                ->get()
+            : collect();
 
         return view('manager.assign_teacher', compact(
             'teacher',
             'classes',
+            'sections',
             'students',
             'year',
-            'selectedClass'
+            'selectedClass',
+            'selectedSection'
         ));
     }
     // 2. حفظ إسناد الصف بالكامل للمعلم
@@ -351,12 +499,15 @@ class ManagerController extends Controller
             'class' => 'required|string',
         ]);
 
+        $schoolId = $this->schoolId();
         $teacher = User::where('role', 'teacher')
             ->where('status', 'approved')
+            ->where('school_id', $schoolId)
             ->findOrFail($teacherId);
 
         // جلب جميع طلاب هذا الصف بالكامل المضافين بالروضة لهذه السنة
-        $classStudentIds = chaldrin::whereYear('created_at', $request->year)
+        $classStudentIds = chaldrin::where('school_id', $schoolId)
+            ->whereYear('created_at', $request->year)
             ->where('class', $request->class)
             ->pluck('id');
 
@@ -385,29 +536,46 @@ class ManagerController extends Controller
     {
         $this->checkManager();
 
-        $manager = auth()->user();
+        $schoolId = $this->schoolId();
         $year = $request->get('year', date('Y'));
         $search = $request->get('search'); // متغير البحث
         $deactivatedTeachersCount = User::where('role', 'teacher')
             ->where('status', 'deactivated')
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->count();
 
         $teachers = User::where('role', 'teacher')
             ->where('status', 'approved')
-            ->where('school_name', $manager->school_name)
+            ->where('school_id', $schoolId)
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
             })
             ->with([
-                'childrenAsTeacher' => function ($query) use ($manager) {
-                    $query->where(function ($q) use ($manager) {
-                        $q->where('chaldrins.manager_id', $manager->id)
-                            ->orWhereNull('chaldrins.manager_id');
-                    });
+                'childrenAsTeacher' => function ($query) use ($schoolId) {
+                    $query->where('chaldrins.school_id', $schoolId);
                 }
             ])
             ->get();
+
+        $teachers->each(function (User $teacher): void {
+            $teacher->setAttribute(
+                'assigned_class_sections',
+                $teacher->childrenAsTeacher
+                    ->filter(fn ($student) => filled($student->class))
+                    ->groupBy(fn ($student) => json_encode([
+                        $this->normalizeSchoolOption($student->class),
+                        $this->normalizeSchoolOption($student->section),
+                    ], JSON_UNESCAPED_UNICODE))
+                    ->map(function ($students) {
+                        $student = $students->first();
+
+                        return trim($student->class)
+                            . ' / '
+                            . (filled($student->section) ? trim($student->section) : 'شعبة غير محددة');
+                    })
+                    ->values()
+            );
+        });
 
         return view('manager.teachers', compact(
             'teachers',
@@ -419,27 +587,50 @@ class ManagerController extends Controller
     public function studentsIndex(Request $request)
     {
         $this->checkManager();
-        $managerId = auth()->id();
+        $schoolId = $this->schoolId();
 
         $year = $request->get('year', date('Y'));
         $class = $request->get('class');
         $search = $request->get('search');
+        $searchSection = $request->input('section');
         $deactivatedStudentsCount = chaldrin::onlyTrashed()
-            ->where('manager_id', $managerId)
+            ->where('school_id', $schoolId)
             ->count();
 
-        $classes = chaldrin::where('manager_id', $managerId)
+        $classes = chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $year)
             ->select('class')
             ->distinct()
             ->orderBy('class')
             ->pluck('class');
 
-        $students = chaldrin::where('manager_id', $managerId)
+        $sectionAliases = chaldrin::where('school_id', $schoolId)
+            ->whereYear('created_at', $year)
+            ->when($class, fn ($query) => $query->where('class', $class))
+            ->whereNotNull('section')
+            ->select('section')
+            ->distinct()
+            ->orderBy('section')
+            ->pluck('section')
+            ->filter(fn ($section) => $this->normalizeSchoolOption($section) !== '')
+            ->groupBy(fn ($section) => $this->normalizeSchoolOption($section));
+        $sections = $sectionAliases->map(fn ($aliases) => $aliases->first())->values();
+        $searchSectionKey = $searchSection !== null
+            ? $this->normalizeSchoolOption($searchSection)
+            : null;
+        $selectedSection = $searchSectionKey !== null && $sectionAliases->has($searchSectionKey)
+            ? $sectionAliases->get($searchSectionKey)->first()
+            : '';
+        $selectedSectionAliases = $selectedSection !== ''
+            ? $sectionAliases->get($this->normalizeSchoolOption($selectedSection))->values()->all()
+            : [];
+
+        $students = chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $year)
             ->when($class, function ($query) use ($class) {
                 $query->where('class', $class);
             })
+            ->when($selectedSection !== '', fn ($query) => $query->whereIn('section', $selectedSectionAliases))
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
             })
@@ -474,22 +665,40 @@ class ManagerController extends Controller
             'عاشر' => 13,
         ];
 
-        // تجميع الطلاب حسب الصف وترتيبهم تصاعدياً بدقة باستخدام مصفوفة الأوزان
-        $groupedStudents = $students->groupBy('class')->sortBy(function ($group, $className) use ($order) {
+        // Keep each class-section combination in its own group.
+        $groupedStudents = $students->groupBy(fn ($student) => json_encode(
+            [
+                $this->normalizeSchoolOption($student->class),
+                $this->normalizeSchoolOption($student->section),
+            ],
+            JSON_UNESCAPED_UNICODE
+        ))->map(function ($groupStudents) {
+            $firstStudent = $groupStudents->first();
+
+            return [
+                'className' => $firstStudent->class,
+                'sectionName' => $firstStudent->section,
+                'students' => $groupStudents,
+            ];
+        })->sortBy(function ($group) use ($order) {
+            $className = $group['className'] ?? '';
             foreach ($order as $key => $val) {
                 if (str_contains($className, $key)) {
-                    return $val;
+                    return sprintf('%02d|%s|%s', $val, $className, $group['sectionName'] ?? '');
                 }
             }
-            return 99; // الصفوف غير المعرفة تظهر في النهاية
-        });
+            return sprintf('99|%s|%s', $className, $group['sectionName'] ?? '');
+        })->values();
 
         return view('manager.students', compact(
             'students',
             'classes',
+            'sections',
             'year',
             'class',
             'search',
+            'searchSection',
+            'selectedSection',
             'groupedStudents',
             'deactivatedStudentsCount'
         ));
@@ -499,10 +708,10 @@ class ManagerController extends Controller
     {
         $this->checkManager();
 
-        $managerId = auth()->id();
+        $schoolId = $this->schoolId();
         $search = $request->get('search');
         $students = chaldrin::onlyTrashed()
-            ->where('manager_id', $managerId)
+            ->where('school_id', $schoolId)
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
             })
@@ -516,7 +725,7 @@ class ManagerController extends Controller
     {
         $this->checkManager();
 
-        $student = chaldrin::where('manager_id', auth()->id())->findOrFail($id);
+        $student = chaldrin::where('school_id', $this->schoolId())->findOrFail($id);
         $student->delete();
 
         return back()->with('success', 'تم إلغاء تفعيل الطالب مع الاحتفاظ ببياناته وتقاريره.');
@@ -527,7 +736,7 @@ class ManagerController extends Controller
         $this->checkManager();
 
         $student = chaldrin::onlyTrashed()
-            ->where('manager_id', auth()->id())
+            ->where('school_id', $this->schoolId())
             ->findOrFail($id);
         $student->restore();
 
@@ -539,7 +748,7 @@ class ManagerController extends Controller
     {
         $this->checkManager();
 
-        $student = chaldrin::where('manager_id', auth()->id())->with([
+        $student = chaldrin::where('school_id', $this->schoolId())->with([
             'dailyVariables',
             'teachers'
         ])->findOrFail($id);
@@ -619,13 +828,13 @@ class ManagerController extends Controller
     public function showClassGrades(Request $request, $className)
     {
         $this->checkManager();
-        $managerId = auth()->id();
+        $schoolId = $this->schoolId();
 
         $searchName = $request->get('search_name');
         $searchTopic = $request->get('search_topic');
         $selectedYear = $request->get('year', date('Y'));
 
-        $students = chaldrin::where('manager_id', $managerId)
+        $students = chaldrin::where('school_id', $schoolId)
             ->where('class', $className)
             ->when($searchName, function ($query) use ($searchName) {
                 $query->where('name', 'like', '%' . $searchName . '%');
@@ -647,13 +856,13 @@ class ManagerController extends Controller
     public function showClassNotes(Request $request, $className)
     {
         $this->checkManager();
-        $managerId = auth()->id();
+        $schoolId = $this->schoolId();
 
         $searchName = $request->get('search_name');
         $searchNotes = $request->get('search_notes');
         $selectedYear = $request->get('year', date('Y'));
 
-        $students = chaldrin::where('manager_id', $managerId)
+        $students = chaldrin::where('school_id', $schoolId)
             ->where('class', $className)
             ->when($searchName, function ($query) use ($searchName) {
                 $query->where('name', 'like', '%' . $searchName . '%');
@@ -675,27 +884,73 @@ class ManagerController extends Controller
     public function updateSettings(Request $request)
     {
         $this->checkManager();
-        $manager = auth()->user();
+        $schoolId = $this->schoolId();
+        $school = School::findOrFail($schoolId);
 
-        $request->validate([
-            'school_name' => 'required|string|max:255',
+        // التحقق من صحة البيانات المرسلة بما فيها الهيكلة التعليمية
+        $validated = $request->validate([
+            'school_name'   => 'required|string|max:255',
             'primary_color' => 'required|string|max:7',
-            'school_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+            'school_logo'   => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+            'classes'       => 'nullable|string',
+            'sections'      => 'nullable|string',
+            'subjects'      => 'nullable|string|max:5000',
         ]);
 
         $data = [
-            'school_name' => $request->school_name,
-            'primary_color' => $request->primary_color,
+            'name'     => $validated['school_name'],
+            'color'    => $validated['primary_color'],
+            'classes'  => $this->parseSchoolOptions($validated['classes'] ?? null),
+            'sections' => $this->parseSchoolOptions($validated['sections'] ?? null),
+            'subjects' => $validated['subjects'] ?? null,
         ];
 
         // رفع الشعار الجديد إن وجد
         if ($request->hasFile('school_logo')) {
-            $logoPath = $request->file('school_logo')->store('logos', 'public');
-            $data['school_logo'] = $logoPath;
+            $data['logo'] = $request->file('school_logo')->store('logos', 'public');
         }
 
-        $manager->update($data);
+        // تحديث بيانات المدرسة في قاعدة البيانات
+        $school->update($data);
 
-        return back()->with('success', 'تم تحديث إعدادات المدرسة بنجاح.');
+        return back()->with('success', 'تم تحديث إعدادات وهيكلة المدرسة بنجاح.');
+    }
+
+    private function parseSchoolOptions(?string $value): ?array
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        return collect(preg_split('/[,،\r\n]+/u', $value) ?: [])
+            ->map(fn ($option) => trim($option))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function configuredSchoolOptions(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = preg_split('/[,،\r\n]+/u', $value) ?: [];
+        }
+
+        return collect($value ?? [])
+            ->map(fn ($option) => trim((string) $option))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function normalizeSchoolOption(?string $value): string
+    {
+        $value = trim((string) $value);
+        $value = preg_replace('/[\x{200B}-\x{200F}\x{FEFF}\x{0640}]/u', '', $value) ?? $value;
+        $value = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $value) ?? $value;
+        $value = strtr($value, ['أ' => 'ا', 'إ' => 'ا', 'آ' => 'ا', 'ٱ' => 'ا']);
+
+        return preg_replace('/\s+/u', ' ', $value) ?? $value;
     }
 }

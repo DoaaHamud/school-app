@@ -7,6 +7,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -21,15 +23,14 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'school_id',
         'email',
         'password',
         'username',
-        'school_name',
         'role',
         'status',
         'phone',
-        'school_logo',
-        'primary_color',
+
     ];
 
     /**
@@ -60,6 +61,16 @@ class User extends Authenticatable
         return $this->hasMany(chaldrin::class, 'mother_id');
     }
 
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id');
+    }
+
+    public function schoolRequests(): HasMany
+    {
+        return $this->hasMany(SchoolMotherRequest::class, 'mother_id');
+    }
+
     public function childrenAsTeacher()
     {
         return $this->belongsToMany(
@@ -69,13 +80,6 @@ class User extends Authenticatable
             'child_id'
         );
     }
-
-    public function childrenAsAmanager()
-    {
-        return $this->hasMany(chaldrin::class, 'manager_id');
-    }
-
-  
 
     public function dailyVariables()
     {

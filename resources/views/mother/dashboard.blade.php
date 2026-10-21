@@ -555,7 +555,7 @@
                 أهلاً بكِ، {{ $mother->name }}
             </h2>
             <p>
-                يمكنكِ متابعة أطفالكِ والاطلاع على تقاريرهم اليومية.
+                يمكنكِ متابعة أبنائك والاطلاع على تقاريرهم اليومية.
             </p>
         </div>
 
@@ -583,126 +583,141 @@
         </div>
         @endif
 
+        <a href="{{ route('mother.school_requests') }}"
+            class="card border-0 shadow-sm rounded-4 mb-4 text-decoration-none text-dark">
+            <div class="card-body p-4 d-flex align-items-center gap-3">
+                <span class="d-flex align-items-center justify-content-center rounded-3 text-white"
+                    style="width: 52px; height: 52px; flex: 0 0 52px; background: #2563eb; font-size: 23px;">
+                    <i class="bi bi-building-add" aria-hidden="true"></i>
+                </span>
+                <span>
+                    <span class="d-block fw-bold">الانضمام إلى مدرسة جديدة</span>
+                    <span class="d-block small text-muted mt-1">اختاري مدرسة وأرسلي طلب الانضمام إلى مديرها</span>
+                </span>
+                <i class="bi bi-chevron-left me-auto text-muted" aria-hidden="true"></i>
+            </div>
+        </a>
+
         <h3 class="children-title">
             <i class="bi bi-people"></i>
-            أطفالي
+            أبنائي
         </h3>
 
         <div class="children-grid">
-        @forelse($children as $child)
-        @php
-            $schoolColor = $child->manager?->primary_color;
+            @forelse($children as $child)
+            @php
+            $schoolColor = $child->school?->color;
             if (!is_string($schoolColor) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $schoolColor)) {
-                $schoolColor = '#2563eb';
+            $schoolColor = '#2563eb';
             }
-        @endphp
-        <div class="child-card" style="--school-color: {{ $schoolColor }};">
-            <div class="school-card-header">
-                <div class="school-brand mb-0">
-                    @if($child->manager?->school_logo)
-                    <img src="{{ asset('storage/' . $child->manager->school_logo) }}" alt="شعار {{ $child->manager->school_name ?? 'المدرسة' }}">
-                    @else
-                    <span class="school-brand-icon"><i class="bi bi-mortarboard"></i></span>
-                    @endif
-                    <span>{{ $child->manager?->school_name ?? 'المدرسة غير محددة' }}</span>
-                </div>
-                <span class="school-caption">بيانات المدرسة</span>
-            </div>
-            <div class="child-header">
-                <div class="child-info">
-                    <div class="child-avatar">
-                        @if($child->image)
-                        <img src="{{ asset('images/children/' . $child->image) }}" alt="{{ $child->name }}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
+            @endphp
+            <div class="child-card" style="--school-color: {{ $schoolColor }};">
+                <div class="school-card-header">
+                    <div class="school-brand mb-0">
+                        @if($child->school?->logo)
+                        <img src="{{ asset('storage/' . $child->school->logo) }}" alt="شعار {{ $child->school->name ?? 'المدرسة' }}">
                         @else
-                        <i class="bi bi-person"></i>
+                        <span class="school-brand-icon"><i class="bi bi-mortarboard"></i></span>
+                        @endif
+                        <span>{{ $child->school?->name ?? 'المدرسة غير محددة' }}</span>
+                    </div>
+                    <span class="school-caption">بيانات المدرسة</span>
+                </div>
+                <div class="child-header">
+                    <div class="child-info">
+                        <div class="child-avatar">
+                            @if($child->image)
+                            <img src="{{ asset('images/children/' . $child->image) }}" alt="{{ $child->name }}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
+                            @else
+                            <i class="bi bi-person"></i>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="child-name">
+                                {{ $child->name }}
+                            </div>
+                            <div class="child-meta">
+                                <span>
+                                    <i class="bi bi-calendar3"></i>
+                                    العمر:
+                                    {{ $child->age ?? 'غير محدد' }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-mortarboard"></i>
+                                    الصف:
+                                    {{ $child->class ?? 'غير محدد' }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-heart"></i>
+                                    الحالة الصحية:
+                                    {{ $child->Health_status ?? 'غير محددة' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('mother.child_details', $child->id) }}" class="details-btn">
+                        <i class="bi bi-eye"></i>
+                        عرض التفاصيل
+                        <i class="bi bi-arrow-left-short"></i>
+                    </a>
+                </div>
+
+                @if($child->dailyVariables->count() > 0)
+                @php
+                $latestReport = $child->dailyVariables->first();
+                @endphp
+                <div class="latest-report">
+                    <div class="latest-title">
+                        <i class="bi bi-journal-text"></i>
+                        آخر تقرير يومي
+                    </div>
+                    <div class="report-box">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="report-topic">
+                                    {{ $latestReport->topic }}
+                                </div>
+                                <div class="report-date">
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ \Carbon\Carbon::parse($latestReport->report_date)->format('Y-m-d H:i') }}
+                                </div>
+                            </div>
+                            <span class="result-badge">
+                                النتيجة:
+                                {{ $latestReport->result ?? 'غير محددة' }}
+                            </span>
+                        </div>
+
+                        @if($latestReport->notes)
+                        <div class="mt-3 text-muted">
+                            <strong>
+                                الملاحظات:
+                            </strong>
+                            {{ $latestReport->notes }}
+                        </div>
                         @endif
                     </div>
-                    <div>
-                        <div class="child-name">
-                            {{ $child->name }}
-                        </div>
-                        <div class="child-meta">
-                            <span>
-                                <i class="bi bi-calendar3"></i>
-                                العمر:
-                                {{ $child->age ?? 'غير محدد' }}
-                            </span>
-                            <span>
-                                <i class="bi bi-mortarboard"></i>
-                                الصف:
-                                {{ $child->class ?? 'غير محدد' }}
-                            </span>
-                            <span>
-                                <i class="bi bi-heart"></i>
-                                الحالة الصحية:
-                                {{ $child->Health_status ?? 'غير محددة' }}
-                            </span>
-                        </div>
-                    </div>
                 </div>
-
-                <a href="{{ route('mother.child_details', $child->id) }}" class="details-btn">
-                    <i class="bi bi-eye"></i>
-                    عرض التفاصيل
-                    <i class="bi bi-arrow-left-short"></i>
-                </a>
-            </div>
-
-            @if($child->dailyVariables->count() > 0)
-            @php
-            $latestReport = $child->dailyVariables->first();
-            @endphp
-            <div class="latest-report">
-                <div class="latest-title">
-                    <i class="bi bi-journal-text"></i>
-                    آخر تقرير يومي
+                @else
+                <div class="latest-report text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    لا يوجد تقرير يومي لهذا الطالب حتى الآن.
                 </div>
-                <div class="report-box">
-                    <div class="d-flex justify-content-between align-items-start gap-3">
-                        <div>
-                            <div class="report-topic">
-                                {{ $latestReport->topic }}
-                            </div>
-                            <div class="report-date">
-                                <i class="bi bi-calendar3"></i>
-                                {{ \Carbon\Carbon::parse($latestReport->report_date)->format('Y-m-d H:i') }}
-                            </div>
-                        </div>
-                        <span class="result-badge">
-                            النتيجة:
-                            {{ $latestReport->result ?? 'غير محددة' }}
-                        </span>
-                    </div>
+                @endif
 
-                    @if($latestReport->notes)
-                    <div class="mt-3 text-muted">
-                        <strong>
-                            الملاحظات:
-                        </strong>
-                        {{ $latestReport->notes }}
-                    </div>
-                    @endif
-                </div>
             </div>
-            @else
-            <div class="latest-report text-muted">
-                <i class="bi bi-info-circle"></i>
-                لا يوجد تقرير يومي لهذا الطفل حتى الآن.
+            @empty
+            <div class="empty-box">
+                <i class="bi bi-people"></i>
+                <h5 class="mt-3">
+                    لا يوجد أطفال مسجلون
+                </h5>
+                <p class="mb-0">
+                    لم يتم تسجيل أي طفل مرتبط بحسابكِ حتى الآن.
+                </p>
             </div>
-            @endif
-
-        </div>
-        @empty
-        <div class="empty-box">
-            <i class="bi bi-people"></i>
-            <h5 class="mt-3">
-                لا يوجد أطفال مسجلون
-            </h5>
-            <p class="mb-0">
-                لم يتم تسجيل أي طفل مرتبط بحسابكِ حتى الآن.
-            </p>
-        </div>
-        @endforelse
+            @endforelse
         </div>
     </main>
 

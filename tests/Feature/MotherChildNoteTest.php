@@ -33,6 +33,8 @@ class MotherChildNoteTest extends TestCase
         $this->actingAs($mother)
             ->get(route('mother.child_details', $child->id))
             ->assertOk()
+            ->assertSee('الشعبة')
+            ->assertSee('الشعبة الأولى')
             ->assertSee($firstTeacher->name)
             ->assertSee($secondTeacher->name)
             ->assertSee(route('mother.child_notes.store', $child->id));
@@ -79,6 +81,10 @@ class MotherChildNoteTest extends TestCase
         $this->actingAs($teacher)
             ->get(route('teacher.mother_notes'))
             ->assertOk()
+            ->assertSee('الصفوف المتاحة')
+            ->assertSee('المتغيرات اليومية')
+            ->assertSee('aria-label="الإشعارات"', false)
+            ->assertSee(route('teacher.profile'))
             ->assertSee('أرجو إخباري عن تقدم ليان.');
 
         $this->actingAs($teacher)
@@ -235,6 +241,7 @@ class MotherChildNoteTest extends TestCase
             'gender' => 'female',
             'Health_status' => 'جيدة',
             'class' => 'الأول',
+            'section' => 'الشعبة الأولى',
             'age' => 5,
             'image' => 'lian.jpg',
         ]);
