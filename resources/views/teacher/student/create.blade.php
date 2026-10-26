@@ -242,88 +242,7 @@
     }
 </style>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container-fluid">
-        <!-- حاوية الشعار -->
-        <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center;">
-            <img src="{{ $schoolBranding->logo ? asset('storage/' . $schoolBranding->logo) : asset('images/logo.jpeg') }}"
-                alt="شعار {{ $schoolBranding->name ?? 'روضتي' }}"
-                style="width: 100%; height: 100%; object-fit: contain;">
-        </div>
 
-        <!-- النصوص بجانب الشعار -->
-        <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-            <span style="font-size: 18px; font-weight: 800; color: #ffffff; line-height: 1.2;">{{ $schoolBranding->name ?? 'روضتي' }}</span>
-            <span style="font-size: 12px; color: rgba(255, 255, 255, 0.85); margin-top: 2px; font-weight: 500;">لوحة تحكم المعلم</span>
-        </div>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#teacherNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="teacherNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}" href="{{ route('teacher.dashboard') }}">الرئيسية</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.students.create') ? 'active' : '' }}" href="{{ route('teacher.students.create') }}">إضافة طالب جديد</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.classes') ? 'active' : '' }}" href="{{ route('teacher.classes') }}">الصفوف المتاحة</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.daily_variables') ? 'active' : '' }}" href="{{ route('teacher.daily_variables') }}">المتغيرات اليومية</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.mother_notes*') ? 'active' : '' }}" href="{{ route('teacher.mother_notes') }}">ملاحظات أولياء الأمور</a>
-                </li>
-            </ul>
-
-            @include('teacher.partials.notifications')
-
-            <!-- قائمة حساب المعلم -->
-            <div class="dropdown me-3">
-                <button class="teacher-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="teacher-avatar">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                    <div class="text-end">
-                        <div class="fw-bold text-dark fs-6">{{ $teacher->name }}</div>
-                        <small class="text-muted d-block" style="font-size: 11px;">معلم</small>
-                    </div>
-                    <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 12px;"></i>
-                </button>
-
-                <ul class="dropdown-menu dropdown-menu-end teacher-dropdown manager-account-menu">
-                    <li>
-                        <div class="dropdown-header px-3 py-2">
-                            <div class="fw-bold text-white fs-6">{{ $teacher->name }}</div>
-                            <small class="text-white">{{ $teacher->email }}</small>
-                        </div>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-2" href="{{ route('teacher.profile') }}">
-                            <i class="bi bi-person-circle me-2"></i> الملف الشخصي
-                        </a>
-                    </li>
-                    <li>
-                </ul>
-            </div>
-
-            <!-- تسجيل الخروج -->
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                @csrf
-                <button type="submit" class="logout-btn">
-                    <i class="bi bi-box-arrow-right me-1"></i> تسجيل الخروج
-                </button>
-            </form>
-        </div>
-    </div>
-</nav>
 
 <!-- Main Content -->
 <main class="main-container">
@@ -400,13 +319,13 @@
                         <select id="student-class" name="class" class="form-select" required>
                             <option value="">اختر الصف</option>
                             @foreach($classes as $class)
-                                <option value="{{ $class }}" {{ old('class') === $class ? 'selected' : '' }}>
-                                    {{ $class }}
-                                </option>
+                            <option value="{{ $class }}" {{ old('class') === $class ? 'selected' : '' }}>
+                                {{ $class }}
+                            </option>
                             @endforeach
                         </select>
                         @if(empty($classes))
-                            <small class="text-muted d-block mt-1">لم يحدد المدير الصفوف المدرسية بعد.</small>
+                        <small class="text-muted d-block mt-1">لم يحدد المدير الصفوف المدرسية بعد.</small>
                         @endif
                     </div>
 
@@ -415,13 +334,13 @@
                         <select id="student-section" name="section" class="form-select" required>
                             <option value="">اختر الشعبة</option>
                             @foreach($sections as $section)
-                                <option value="{{ $section }}" {{ old('section') === $section ? 'selected' : '' }}>
-                                    {{ $section }}
-                                </option>
+                            <option value="{{ $section }}" {{ old('section') === $section ? 'selected' : '' }}>
+                                {{ $section }}
+                            </option>
                             @endforeach
                         </select>
                         @if(empty($sections))
-                            <small class="text-muted d-block mt-1">لم يحدد المدير الشُعَب المدرسية بعد.</small>
+                        <small class="text-muted d-block mt-1">لم يحدد المدير الشُعَب المدرسية بعد.</small>
                         @endif
                     </div>
 

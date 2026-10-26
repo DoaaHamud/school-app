@@ -1,22 +1,40 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{{-- filepath: resources/views/mother/child_notes.blade.php --}}
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ملاحظاتي - {{ $child->name }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body { background: #f5f7fb; color: #273142; font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
-        .main-container { max-width: 1000px; margin: auto; padding: 35px 20px; }
-        .note-card { background: #fff; border: 1px solid #e5eaf0; border-radius: 14px; padding: 22px; margin-bottom: 16px; }
-        .note-text { white-space: pre-wrap; line-height: 1.8; }
-    </style>
-</head>
+@section('content')
 
-<body>
-    <main class="main-container">
+@php
+$schoolColor = $child->school?->color;
+if (!is_string($schoolColor) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $schoolColor)) {
+$schoolColor = '#2563eb';
+}
+@endphp
+
+<!-- اجبار التنسيقات والتوسيط بشكل مباشر -->
+<style>
+    .mother-notes-wrapper {
+        max-width: 900px !important;
+        margin: 40px auto !important;
+        padding: 0 20px 60px 20px;
+    }
+
+    .mother-notes-wrapper .note-card {
+        background: #fff;
+        border: 1px solid #e5eaf0;
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+    }
+
+    .mother-notes-wrapper .note-text {
+        white-space: pre-wrap;
+        line-height: 1.8;
+    }
+</style>
+
+<div style="--school-color: {{ $schoolColor }};">
+    <main class="mother-notes-wrapper">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
             <div>
                 <h1 class="h4 fw-bold mb-1">ملاحظاتي وردود المعلمات</h1>
@@ -59,6 +77,6 @@
         </div>
         @endforelse
     </main>
-</body>
+</div>
 
-</html>
+@endsection

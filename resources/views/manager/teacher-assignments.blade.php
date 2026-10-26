@@ -65,7 +65,6 @@
     }
 </style>
 
-@include('manager.partials.simple-navbar')
 
 <main class="container py-3 assignment-page">
     @if(session('success'))

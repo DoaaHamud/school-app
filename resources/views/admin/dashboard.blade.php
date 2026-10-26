@@ -166,6 +166,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-3">
+                <!-- زر المدراء غير المفعلين -->
                 <a href="{{ route('admin.managers.deactivated') }}" class="btn-custom-warning position-relative">
                     <i class="bi bi-person-exclamation"></i> المدراء غير المفعلين
                     @if($deactivatedCount > 0)
@@ -175,11 +176,73 @@
                     @endif
                 </a>
 
+                <!-- أيقونة وقائمة الإشعارات -->
+                @php
+                $admin = auth()->user();
+                $unreadCount = $admin ? $admin->unreadNotifications()->count() : 0;
+                $latestNotifications = $admin ? $admin->notifications()->latest()->take(5)->get() : collect();
+                @endphp
+
+                <div class="dropdown">
+                    <button class="btn btn-light position-relative rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        type="button"
+                        id="adminNotificationsDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        style="width: 42px; height: 42px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                        <i class="bi bi-bell-fill text-primary fs-5"></i>
+                        @if($unreadCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
+                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                        </span>
+                        @endif
+                    </button>
+
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0" aria-labelledby="adminNotificationsDropdown" style="width: 330px; border-radius: 14px; overflow: hidden;">
+                        <div class="d-flex align-items-center justify-content-between p-3 bg-light border-bottom">
+                            <strong class="text-dark fs-6">
+                                <i class="bi bi-bell ms-1 text-primary"></i> الإشعارات
+                            </strong>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ $unreadCount }} غير مقروء
+                            </span>
+                        </div>
+
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            @forelse($latestNotifications as $notification)
+                            <a href="{{ route('admin.dashboard') }}" class="dropdown-item p-3 border-bottom text-wrap {{ $notification->read_at === null ? 'bg-light' : '' }}">
+                                <div class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-person-plus-fill text-primary fs-5 mt-1"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="text-dark small fw-semibold">
+                                            {{ $notification->data['message'] ?? 'لديك إشعار جديد' }}
+                                        </div>
+                                        <div class="text-muted mt-1" style="font-size: 11px;">
+                                            <i class="bi bi-clock ms-1"></i> {{ $notification->created_at->diffForHumans() }}
+                                        </div>
+                                    </div>
+                                    @if($notification->read_at === null)
+                                    <span class="rounded-circle bg-primary mt-2" style="width: 7px; height: 7px; flex-shrink: 0;"></span>
+                                    @endif
+                                </div>
+                            </a>
+                            @empty
+                            <div class="text-center p-4 text-muted small">
+                                <i class="bi bi-bell-slash fs-3 d-block mb-1"></i>
+                                لا توجد إشعارات حتى الآن.
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <!-- معلومات الأدمن -->
                 <div class="admin-info">
                     <i class="bi bi-person-circle fs-5 text-primary"></i>
                     <span>مرحباً، <strong>{{ auth()->user()->name }}</strong></span>
                 </div>
 
+                <!-- زر الخروج -->
                 <form action="{{ route('logout') }}" method="POST" class="m-0">
                     @csrf
                     <button type="submit" class="logout-btn">

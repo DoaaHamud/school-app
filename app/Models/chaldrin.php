@@ -3,11 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+
+
 
 class chaldrin extends Model
 {
+    use HasFactory, Notifiable, HasApiTokens;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -51,5 +58,4 @@ class chaldrin extends Model
     {
         return $this->hasOne(Daily_variables::class, 'child_id')->latestOfMany('report_date');
     }
-
 }

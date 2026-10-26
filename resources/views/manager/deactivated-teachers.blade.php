@@ -2,7 +2,6 @@
 
 @section('content')
 
-@include('manager.partials.simple-navbar')
 
 <main class="container my-4" style="max-width: 1100px;">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">

@@ -39,13 +39,6 @@
             white-space: normal;
         }
 
-        .navbar-brand {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-left: 30px;
-        }
-
         .nav-link {
             color: #4b5563;
             font-size: 15px;
@@ -382,173 +375,15 @@
             font-size: 50px;
             color: #cbd5e1;
         }
-
-        @media (max-width: 768px) {
-            .navbar-custom {
-                padding: 10px 15px;
-            }
-
-            .nav-link {
-                padding: 10px !important;
-            }
-
-            .main-container {
-                padding: 30px 15px;
-            }
-
-            .children-grid {
-                grid-template-columns: 1fr;
-                gap: 18px;
-            }
-
-            .child-card {
-                padding: 19px;
-            }
-
-            .child-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .child-info {
-                align-items: flex-start;
-            }
-
-            .child-avatar {
-                width: 62px;
-                height: 62px;
-                flex-basis: 62px;
-                border-radius: 18px;
-            }
-
-            .child-name {
-                font-size: 18px;
-            }
-
-            .details-btn {
-                display: block;
-                text-align: center;
-            }
-
-            .school-card-header {
-                align-items: flex-start;
-            }
-
-            .report-box .d-flex {
-                flex-direction: column;
-            }
-
-            .result-badge {
-                align-self: flex-start;
-            }
-        }
     </style>
 </head>
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-custom">
-        <div class="container-fluid">
-            <!-- أيقونة محايدة للوحة الأم -->
-            <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
-            </div>
+    <!-- استدعاء النافبار هنا بسطر واحد فقط! -->
+    @include('mother.navbar')
 
-            <!-- اسم لوحة الأم -->
-            <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-                <span style="font-size: 18px; font-weight: 800; color: #334155; line-height: 1.2;">لوحة الأم</span>
-            </div>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#motherNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="motherNavbar">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('mother.dashboard') }}">
-                            الرئيسية
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="dropdown me-lg-3">
-                    <button class="btn position-relative d-flex align-items-center gap-2 text-secondary"
-                        type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="الإشعارات">
-                        <i class="bi bi-bell fs-5"></i>
-                        <span class="d-lg-none">الإشعارات</span>
-                        @if($unreadNotificationsCount > 0)
-                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">
-                            {{ $unreadNotificationsCount }}
-                        </span>
-                        @endif
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end mother-dropdown mother-notifications-menu">
-                        <li class="dropdown-header fw-bold">الإشعارات</li>
-                        @forelse($motherNotifications as $notification)
-                        <li>
-                            <a class="dropdown-item mother-notification-item py-2 {{ $notification->read_at ? '' : 'bg-light' }}"
-                                href="{{ route('mother.notifications.open', $notification->id) }}">
-                                <span class="d-flex align-items-start gap-2">
-                                    <i class="bi {{ ($notification->data['type'] ?? '') === 'mother_child_note_reply' ? 'bi-chat-left-text-fill' : 'bi-file-earmark-text' }} text-primary mt-1"></i>
-                                    <span>
-                                        <span class="d-block fw-semibold">{{ $notification->data['child_name'] ?? 'طفلكِ' }}</span>
-                                        <span class="mother-notification-message d-block small text-muted">{{ $notification->data['message'] ?? 'تمت إضافة تقرير جديد.' }}</span>
-                                        <small class="text-secondary">{{ $notification->created_at->diffForHumans() }}</small>
-                                    </span>
-                                </span>
-                            </a>
-                        </li>
-                        @empty
-                        <li class="px-3 py-2 small text-muted">لا توجد إشعارات حتى الآن.</li>
-                        @endforelse
-                    </ul>
-                </div>
-
-                <!-- قائمة حساب الأم -->
-                <div class="dropdown mother-account">
-                    <button class="mother-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <div class="mother-avatar">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <div class="mother-info">
-                            <span class="mother-label">{{ $mother->name }}</span>
-                            <span class="mother-role">ولي أمر (أم)</span>
-                        </div>
-                        <i class="bi bi-chevron-down text-muted" style="font-size: 11px; margin-right: 4px;"></i>
-                    </button>
-
-                    <ul class="dropdown-menu dropdown-menu-end mother-dropdown">
-                        <li>
-                            <div class="dropdown-header px-3 py-2">
-                                <strong>{{ $mother->name }}</strong>
-                                <small class="text-muted d-block">{{ $mother->email ?? '' }}</small>
-                            </div>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2" href="{{ route('mother.profile') }}">
-                                <i class="bi bi-person-circle me-1 text-primary"></i> الملف الشخصي
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- تسجيل الخروج -->
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="logout-btn">
-                        تسجيل الخروج
-                    </button>
-                </form>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main -->
+    <!-- Main Content -->
     <main class="main-container">
         <div class="welcome-section">
             <h2>

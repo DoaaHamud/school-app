@@ -139,6 +139,7 @@
             margin-top: 2px;
         }
 
+        /* استعادة تنسيق الإشعارات القديم بالضبط */
         .mother-notifications-menu {
             width: min(340px, calc(100vw - 30px));
             padding: 8px;
@@ -746,15 +747,30 @@ $schoolColor = '#2563eb';
         </section>
 
 
-        {{-- استبدلي قسم Daily reports الحالي بهذا القسم --}}
+        {{-- معالجة تقسيم تقارير اليوم والتقارير السابقة --}}
 
         @php
         $dailyReports = $child->dailyVariables
         ->sortByDesc('report_date')
         ->values();
 
-        $latestReport = $dailyReports->first();
-        $olderReports = $dailyReports->slice(1)->values();
+        // تصفية تقارير اليوم الحالي
+        $todayReports = $dailyReports->filter(function($report) {
+        return \Carbon\Carbon::parse($report->report_date)->isToday();
+        })->values();
+
+        // إذا لم تكن هناك تقارير اليوم، نعتبر أحدث تقرير هو تقرير اليوم افتراضياً لعدم ترك الواجهة فارغة
+        if ($todayReports->isEmpty() && $dailyReports->isNotEmpty()) {
+        $todayReports = collect([$dailyReports->first()]);
+        }
+
+        $latestTodayReport = $todayReports->first(); // أحدث تقرير لليوم (المعاينة)
+        $otherTodayReports = $todayReports->slice(1)->values(); // بقية تقارير اليوم
+
+        // كافة التقارير السابقة للأيام الأخرى
+        $olderReports = $dailyReports->reject(function($report) use ($todayReports) {
+        return $todayReports->contains('id', $report->id);
+        })->values();
         @endphp
 
         <h3 class="section-title">
@@ -762,25 +778,76 @@ $schoolColor = '#2563eb';
             التقارير اليومية
         </h3>
 
-        @if($latestReport)
-        <details class="report-card p-0 overflow-hidden" id="dailyReportsCard">
+        @if($dailyReports->isNotEmpty())
+
+        {{-- 1. بطاقة تقارير اليوم (بطاقة واحدة منسدلة) --}}
+        @if($latestTodayReport)
+        <details class="report-card p-0 overflow-hidden mb-4">
             <summary style="cursor: pointer; list-style: none; padding: 20px;">
                 <div class="report-header mb-0">
                     <div>
                         <div class="report-topic">
                             <i class="bi bi-bookmark"></i>
-                            {{ $latestReport->topic }}
+                            {{ $latestTodayReport->topic }}
+                            <span class="badge bg-success ms-2" style="font-size: 11px;">تقرير اليوم</span>
                         </div>
                         <div class="report-date mt-2 mb-0">
                             <i class="bi bi-calendar3"></i>
-                            أحدث تقرير:
-                            {{ \Carbon\Carbon::parse($latestReport->report_date)->format('Y-m-d H:i') }}
+                            أحدث تقرير: {{ \Carbon\Carbon::parse($latestTodayReport->report_date)->format('Y-m-d H:i') }}
                         </div>
                     </div>
 
                     <span class="result-badge">
                         <i class="bi bi-bar-chart"></i>
-                        النتيجة: {{ $latestReport->result ?? 'غير محددة' }}
+                        النتيجة: {{ $latestTodayReport->result ?? 'غير محددة' }}
+                        <i class="bi bi-chevron-down me-1"></i>
+                    </span>
+                </div>
+            </summary>
+
+            <div style="padding: 0 20px 20px;">
+                <div class="report-notes {{ $latestTodayReport->notes ? '' : 'text-muted' }} mb-3">
+                    @if($latestTodayReport->notes)
+                    <strong>
+                        <i class="bi bi-chat-left-text"></i>
+                        ملاحظات المعلم:
+                    </strong>
+                    {{ $latestTodayReport->notes }}
+                    @else
+                    لا توجد ملاحظات لهذا التقرير.
+                    @endif
+                </div>
+
+                {{-- عرض بقية تقارير اليوم إن وجدت داخل نفس البطاقة --}}
+                @if($otherTodayReports->isNotEmpty())
+                <div class="border-top pt-3 mt-3">
+                    <h6 class="fw-bold text-secondary mb-3">تقارير أخرى أُضيفَت اليوم ({{ $otherTodayReports->count() }}):</h6>
+                    @foreach($otherTodayReports as $todayReport)
+                    <div class="bg-light p-3 rounded mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-dark"><i class="bi bi-bookmark text-primary"></i> {{ $todayReport->topic }}</span>
+                            <span class="result-badge">النتيجة: {{ $todayReport->result ?? 'غير محددة' }}</span>
+                        </div>
+                        <div class="text-muted small mb-2"><i class="bi bi-calendar3"></i> {{ \Carbon\Carbon::parse($todayReport->report_date)->format('Y-m-d H:i') }}</div>
+                        <div class="small text-secondary">{{ $todayReport->notes ?? 'لا توجد ملاحظات.' }}</div>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+        </details>
+        @endif
+
+        {{-- 2. بطاقة التقارير السابقة (مجمعة بالكامل في بطاقة واحدة تعرض 10 مع زر تحميل المزيد) --}}
+        @if($olderReports->isNotEmpty())
+        <details class="report-card p-0 overflow-hidden" id="dailyReportsCard">
+            <summary style="cursor: pointer; list-style: none; padding: 20px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-secondary fs-6">
+                        <i class="bi bi-clock-history ms-1"></i> التقارير السابقة ({{ $olderReports->count() }})
+                    </span>
+                    <span class="result-badge">
+                        عرض التقارير القديمة
                         <i class="bi bi-chevron-down me-1"></i>
                     </span>
                 </div>
@@ -829,6 +896,8 @@ $schoolColor = '#2563eb';
             </div>
             @endif
         </details>
+        @endif
+
         @else
         <div class="empty-reports">
             <i class="bi bi-journal-x"></i>

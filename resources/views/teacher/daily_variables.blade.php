@@ -398,6 +398,7 @@
         display: flex;
         gap: 7px;
         margin-top: 13px;
+        justify-content: flex-start;
     }
 
     .edit-btn,
@@ -464,88 +465,7 @@
     }
 </style>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container-fluid">
-        <!-- حاوية الشعار -->
-        <div style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center;">
-            <img src="{{ $schoolBranding->logo ? asset('storage/' . $schoolBranding->logo) : asset('images/logo.jpeg') }}"
-                alt="شعار {{ $schoolBranding->name ?? 'روضتي' }}"
-                style="width: 100%; height: 100%; object-fit: contain;">
-        </div>
 
-        <!-- النصوص بجانب الشعار -->
-        <div class="brand-text" style="display: flex; flex-direction: column; text-align: right;">
-            <span style="font-size: 18px; font-weight: 800; color: #ffffff; line-height: 1.2;">{{ $schoolBranding->name ?? 'روضتي' }}</span>
-            <span style="font-size: 12px; color: rgba(255, 255, 255, 0.85); margin-top: 2px; font-weight: 500;">لوحة تحكم المعلم</span>
-        </div>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#teacherNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="teacherNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}" href="{{ route('teacher.dashboard') }}">الرئيسية</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.students.create') ? 'active' : '' }}" href="{{ route('teacher.students.create') }}">إضافة طالب جديد</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.classes') ? 'active' : '' }}" href="{{ route('teacher.classes') }}">الصفوف المتاحة</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.daily_variables') ? 'active' : '' }}" href="{{ route('teacher.daily_variables') }}">المتغيرات اليومية</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('teacher.mother_notes*') ? 'active' : '' }}" href="{{ route('teacher.mother_notes') }}">ملاحظات أولياء الأمور</a>
-                </li>
-            </ul>
-
-            @include('teacher.partials.notifications')
-
-            <!-- قائمة حساب المعلم -->
-            <div class="dropdown me-3">
-                <button class="teacher-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="teacher-avatar">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                    <div class="text-end">
-                        <div class="fw-bold text-white fs-6">{{ $teacher->name }}</div>
-                        <small class="text-white d-block" style="font-size: 11px;">معلم</small>
-                    </div>
-                    <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 12px;"></i>
-                </button>
-
-                <ul class="dropdown-menu dropdown-menu-end teacher-dropdown manager-account-menu">
-                    <li>
-                        <div class="dropdown-header px-3 py-2">
-                            <div class="fw-bold text-white fs-6">{{ $teacher->name }}</div>
-                            <small class="text-white">{{ $teacher->email }}</small>
-                        </div>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-2" href="{{ route('teacher.profile') }}">
-                            <i class="bi bi-person-circle me-2"></i> الملف الشخصي
-                        </a>
-                    </li>
-                    <li>
-                </ul>
-            </div>
-
-            <!-- تسجيل الخروج -->
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                @csrf
-                <button type="submit" class="logout-btn">
-                    <i class="bi bi-box-arrow-right me-1"></i> تسجيل الخروج
-                </button>
-            </form>
-        </div>
-    </div>
-</nav>
 
 <!-- Main Content -->
 <main class="main-container">
@@ -575,7 +495,7 @@
     </div>
     @endif
 
-    {{-- بطاقة إضافة المتغيرات اليومية --}}
+    {{-- بطاقة إضافة المتغيرات اليومية (بنفس الكود الأصلي تماماً) --}}
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 14px; overflow: hidden; background: #fff;">
         <div class="card-header bg-white border-bottom p-4">
             <div class="d-flex align-items-center gap-3">
@@ -613,7 +533,7 @@
                         <select id="sectionFilter" class="form-select" disabled>
                             <option value="">اختر الشعبة</option>
                             @foreach($sections as $section)
-                                <option value="{{ $section }}">{{ $section }}</option>
+                            <option value="{{ $section }}">{{ $section }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -641,9 +561,9 @@
                         <select name="topic_subject" id="topic_subject" class="form-select" required>
                             <option value="">اختر مادة أو موضوعًا مخصصًا</option>
                             @foreach($subjects as $subject)
-                                <option value="{{ $subject }}" {{ old('topic_subject') === $subject ? 'selected' : '' }}>
-                                    {{ $subject }}
-                                </option>
+                            <option value="{{ $subject }}" {{ old('topic_subject') === $subject ? 'selected' : '' }}>
+                                {{ $subject }}
+                            </option>
                             @endforeach
                             <option value="__custom__" {{ old('topic_subject') === '__custom__' ? 'selected' : '' }}>
                                 كتابة موضوع مخصص
@@ -680,20 +600,26 @@
         </div>
     </div>
 
-    <!-- Students & Daily Reports List -->
+    <!-- Students & Daily Reports List (مع إضافة خانة البحث حسب الشعبة بجانبهم) -->
     @if($students->isNotEmpty())
     <div class="row g-3 mb-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label for="studentNameSearch" class="form-label fw-bold text-secondary small">
                 <i class="bi bi-search me-1" style="color: var(--primary-color);"></i> البحث باسم الطالب
             </label>
             <input type="search" id="studentNameSearch" class="form-control" placeholder="اكتب اسم الطالب">
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label for="studentClassSearch" class="form-label fw-bold text-secondary small">
                 <i class="bi bi-mortarboard me-1" style="color: var(--primary-color);"></i> البحث حسب الصف
             </label>
             <input type="search" id="studentClassSearch" class="form-control" placeholder="اكتب اسم الصف">
+        </div>
+        <div class="col-md-4">
+            <label for="studentSectionSearch" class="form-label fw-bold text-secondary small">
+                <i class="bi bi-people me-1" style="color: var(--primary-color);"></i> البحث حسب الشعبة
+            </label>
+            <input type="search" id="studentSectionSearch" class="form-control" placeholder="اكتب اسم الشعبة">
         </div>
     </div>
     <div id="noStudentSearchResults" class="alert alert-light border text-center d-none" role="status" aria-live="polite">
@@ -706,7 +632,10 @@
         @php
         $latestDaily = $student->latestDailyVariable;
         @endphp
-        <div class="student-card" data-student-name="{{ $student->name }}" data-student-class="{{ $student->class ?? '' }}">
+        <div class="student-card"
+            data-student-name="{{ $student->name }}"
+            data-student-class="{{ $student->class ?? '' }}"
+            data-student-section="{{ $student->section ?? '' }}">
             <button type="button" class="student-header student-toggle" data-bs-toggle="collapse"
                 data-bs-target="#studentReports{{ $student->id }}" aria-expanded="false"
                 aria-controls="studentReports{{ $student->id }}">
@@ -718,6 +647,7 @@
                         <h4>{{ $student->name }}</h4>
                         <div class="student-meta">
                             <span><i class="bi bi-mortarboard"></i> الصف: {{ $student->class ?? 'غير محدد' }}</span>
+                            <span><i class="bi bi-people"></i> الشعبة: {{ $student->section ?? 'غير محدد' }}</span>
                             <span><i class="bi bi-calendar3"></i> العمر: {{ $student->age ?? 'غير محدد' }}</span>
                             <span><i class="bi bi-journal-text"></i> {{ $student->daily_variables_count }} تقرير</span>
                         </div>
@@ -783,10 +713,77 @@
         const saveButton = document.getElementById('saveReportBtn');
         const topicSubject = document.getElementById('topic_subject');
         const customTopic = document.getElementById('custom_topic');
+
         const studentNameSearch = document.getElementById('studentNameSearch');
         const studentClassSearch = document.getElementById('studentClassSearch');
+        const studentSectionSearch = document.getElementById('studentSectionSearch');
         const noStudentSearchResults = document.getElementById('noStudentSearchResults');
 
+        const studentOptions = Array.from(studentFilter.options).slice(1);
+
+        const updateStudentOptions = function() {
+            const selectedClass = classFilter.value;
+            const selectedSection = sectionFilter.value;
+
+            studentFilter.innerHTML = '<option value="">اختر الطفل</option>';
+            saveButton.disabled = true;
+
+            let filteredStudents = studentOptions.filter(option => {
+                const matchesClass = !selectedClass || option.dataset.class === selectedClass;
+                const matchesSection = !selectedSection || option.dataset.section === selectedSection;
+                return matchesClass && matchesSection;
+            });
+
+            if (selectedClass && filteredStudents.length > 0) {
+                filteredStudents.forEach(option => studentFilter.appendChild(option.cloneNode(true)));
+                studentFilter.disabled = false;
+            } else {
+                studentFilter.disabled = true;
+                if (!selectedClass) {
+                    studentFilter.innerHTML = '<option value="">اختر الصف أولاً</option>';
+                } else {
+                    studentFilter.innerHTML = '<option value="">لا يوجد أطفال في هذا الخيار</option>';
+                }
+            }
+        };
+
+        classFilter.addEventListener('change', function() {
+            const selectedClass = this.value;
+            if (selectedClass) {
+                sectionFilterContainer.classList.remove('d-none');
+                sectionFilter.disabled = false;
+            } else {
+                sectionFilterContainer.classList.add('d-none');
+                sectionFilter.disabled = true;
+                sectionFilter.value = '';
+            }
+            updateStudentOptions();
+        });
+
+        sectionFilter.addEventListener('change', updateStudentOptions);
+
+        // تم إرجاع الكود الأصلي تماماً لضبط مسار الحفظ عبر route('teacher.daily_store', studentId) الصحيح
+        studentFilter.addEventListener('change', function() {
+            const studentId = this.value;
+            if (studentId) {
+                reportForm.action = "{{ route('teacher.daily_store', ':id') }}".replace(':id', studentId);
+                saveButton.disabled = false;
+            } else {
+                reportForm.action = "{{ route('teacher.daily_store', 0) }}";
+                saveButton.disabled = true;
+            }
+        });
+
+        topicSubject.addEventListener('change', function() {
+            const isCustom = this.value === '__custom__';
+            customTopic.hidden = !isCustom;
+            customTopic.required = isCustom;
+            if (!isCustom) {
+                customTopic.value = '';
+            }
+        });
+
+        // سكربت تحميل التقارير القديمة AJAX
         const loadStudentReports = async function(collapse, page) {
             if (collapse.dataset.loading === 'true') {
                 return;
@@ -864,7 +861,8 @@
             });
         });
 
-        if (studentNameSearch && studentClassSearch && noStudentSearchResults) {
+        // سكربت البحث الثلاثي (الاسم، الصف، الشعبة)
+        if (studentNameSearch && studentClassSearch && studentSectionSearch && noStudentSearchResults) {
             const studentCards = Array.from(document.querySelectorAll('.student-card'));
             const normalizeSearchValue = value => value
                 .toLocaleLowerCase()
@@ -874,12 +872,15 @@
             const filterStudentCards = function() {
                 const nameQuery = normalizeSearchValue(studentNameSearch.value);
                 const classQuery = normalizeSearchValue(studentClassSearch.value);
+                const sectionQuery = normalizeSearchValue(studentSectionSearch.value);
                 let visibleCards = 0;
 
                 studentCards.forEach(function(card) {
                     const matchesName = normalizeSearchValue(card.dataset.studentName || '').includes(nameQuery);
                     const matchesClass = normalizeSearchValue(card.dataset.studentClass || '').includes(classQuery);
-                    const isVisible = matchesName && matchesClass;
+                    const matchesSection = normalizeSearchValue(card.dataset.studentSection || '').includes(sectionQuery);
+
+                    const isVisible = matchesName && matchesClass && matchesSection;
 
                     card.hidden = !isVisible;
                     if (isVisible) {
@@ -892,82 +893,8 @@
 
             studentNameSearch.addEventListener('input', filterStudentCards);
             studentClassSearch.addEventListener('input', filterStudentCards);
+            studentSectionSearch.addEventListener('input', filterStudentCards);
         }
-
-        const allStudentOptions = Array.from(studentFilter.options)
-            .filter(option => option.value !== '')
-            .map(option => option.cloneNode(true));
-
-        const updateStudentOptions = function() {
-            const selectedClass = classFilter.value;
-            const selectedSection = sectionFilter.value;
-            studentFilter.innerHTML = '';
-
-            const placeholder = document.createElement('option');
-            placeholder.value = '';
-            placeholder.textContent = !selectedClass
-                ? 'اختر الصف أولاً'
-                : (sectionFilterContainer.classList.contains('d-none') || selectedSection
-                    ? 'اختر الطفل'
-                    : 'اختر الشعبة أولاً');
-            studentFilter.appendChild(placeholder);
-
-            if (selectedClass && (sectionFilterContainer.classList.contains('d-none') || selectedSection)) {
-                allStudentOptions.forEach(function(option) {
-                    const matchesClass = option.dataset.class === selectedClass;
-                    const matchesSection = sectionFilterContainer.classList.contains('d-none')
-                        || option.dataset.section === selectedSection;
-                    if (matchesClass && matchesSection) {
-                        studentFilter.appendChild(option.cloneNode(true));
-                    }
-                });
-                studentFilter.disabled = false;
-            } else {
-                studentFilter.disabled = true;
-            }
-            saveButton.disabled = true;
-        };
-
-        classFilter.addEventListener('change', function() {
-            const hasSections = sectionFilter.options.length > 1;
-            sectionFilter.value = '';
-            sectionFilter.disabled = !this.value || !hasSections;
-            sectionFilterContainer.classList.toggle('d-none', !this.value || !hasSections);
-            updateStudentOptions();
-        });
-
-        sectionFilter.addEventListener('change', function() {
-            updateStudentOptions();
-        });
-
-        studentFilter.addEventListener('change', function() {
-            saveButton.disabled = !this.value;
-        });
-
-        const toggleCustomTopic = function() {
-            const isCustom = topicSubject.value === '__custom__';
-            customTopic.hidden = !isCustom;
-            customTopic.required = isCustom;
-            if (!isCustom) {
-                customTopic.value = '';
-            }
-        };
-
-        topicSubject.addEventListener('change', toggleCustomTopic);
-        toggleCustomTopic();
-
-        // تحديث رابط الـ action في النموذج ديناميكياً ليطابق مسار الروت الصحيح تماماً
-        reportForm.addEventListener('submit', function(event) {
-            const studentId = studentFilter.value;
-            if (!studentId) {
-                event.preventDefault();
-                alert('يرجى اختيار الصف والطفل أولاً.');
-                return;
-            }
-            // بناء المسار بالطريقة الصحيحة المتوافقة مع الروت: /teacher/students/{id}/daily-variable
-            reportForm.action = "{{ url('/teacher/students') }}/" + encodeURIComponent(studentId) + "/daily-variable";
-        });
     });
 </script>
-
 @endsection

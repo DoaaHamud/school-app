@@ -77,9 +77,16 @@
                     </div>
 
                     <div class="mb-4">
-                        <label for="school_name" class="form-label fw-semibold">اسم الروضة / المدرسة</label>
-                        <input id="school_name" type="text" class="form-control"
-                            value="{{ $teacher->school_name ?? 'غير محدد' }}" disabled>
+                        <label for="school_name" class="form-label fw-semibold">
+                            اسم الروضة / المدرسة
+                        </label>
+
+                        <input
+                            id="school_name"
+                            type="text"
+                            class="form-control"
+                            value="{{ $teacher->school?->name ?? 'غير محدد' }}"
+                            disabled>
                     </div>
 
                     <button type="submit" class="btn text-white fw-bold px-4 py-2"

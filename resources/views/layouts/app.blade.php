@@ -46,6 +46,7 @@
             background-color: #f7f8fc;
             font-family: system-ui, -apple-system, sans-serif;
             color: #1f2937;
+            margin: 0;
         }
 
         form[action$="/logout"] button[type="submit"],
@@ -77,10 +78,171 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15);
         }
+
+        /* ==========================================
+           تنسيقات الناف بار المركزية (الموحدة لكل صفحات الأم)
+           ========================================== */
+        .navbar-custom {
+            background: #ffffff;
+            min-height: 70px;
+            padding: 0 35px;
+            border-bottom: 3px solid var(--primary-color, #2563eb);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .school-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color, #2563eb);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .school-logo {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            padding: 4px;
+            border: 1px solid color-mix(in srgb, var(--primary-color, #2563eb) 20%, white);
+            border-radius: 12px;
+            object-fit: contain;
+            background: #fff;
+        }
+
+        .school-brand-name {
+            font-size: 16px;
+            line-height: 1.25;
+        }
+
+        .school-brand-caption {
+            display: block;
+            margin-top: 3px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .nav-link {
+            color: #4b5563;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 24px 15px !important;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-color, #2563eb);
+        }
+
+        .mother-account {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 6px 12px;
+            margin-left: 15px;
+        }
+
+        .mother-profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 6px 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .mother-profile-btn:hover {
+            background: #f8fafc;
+        }
+
+        .mother-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: var(--primary-color, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .mother-info {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .mother-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .mother-role {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .mother-dropdown {
+            min-width: 235px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.10);
+        }
+
+        .mother-notifications-menu {
+            width: min(340px, calc(100vw - 30px));
+            padding: 8px;
+        }
+
+        .mother-notification-item {
+            white-space: normal;
+            border-radius: 8px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #dc3545;
+            color: #dc3545;
+            border-radius: 7px;
+            padding: 7px 15px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 
 <body style="--primary-color: {{ $schoolBranding?->color ?? '#2563eb' }};">
+
+    {{-- تضمين ناف بار الأم تلقائياً في صفحات الأم لتوحيد التصميم مركزياً --}}
+    @auth
+
+    @if(auth()->user()->role === 'mother' || request()->is('mother*'))
+    @include('mother.navbar')
+    @endif
+
+    @if(auth()->user()->role === 'manager' || request()->is('manager*'))
+    @include('manager.navbar')
+    @endif
+
+
+    @if(auth()->user()->role === 'teacher' || request()->is('teacher/*'))
+    @include('teacher.navbar')
+    @endif
+
+    @endauth
 
     <main>
         @yield('content')

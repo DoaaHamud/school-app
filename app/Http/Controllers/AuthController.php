@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Notifications\ManagerRegistrationNotification;
 
 class AuthController extends Controller
 {
@@ -97,6 +98,13 @@ class AuthController extends Controller
                 ->where('school_id', $user->school_id)
                 ->each(fn(User $manager) => $manager->notify(
                     new TeacherRegistrationNotification($user)
+                ));
+        }
+        // إرسال إشعار للأدمن عند تسجيل مدير جديد
+        if ($user->role === 'manager') {
+            User::where('role', 'admin')
+                ->each(fn(User $admin) => $admin->notify(
+                    new ManagerRegistrationNotification($user)
                 ));
         }
 

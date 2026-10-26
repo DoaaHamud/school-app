@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-@include('manager.partials.simple-navbar')
 
 <div class="container page-container my-4" style="max-width: 1100px;">
     @if(session('success'))

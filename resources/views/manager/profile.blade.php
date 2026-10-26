@@ -2,7 +2,6 @@
 
 @section('content')
 
-@include('manager.partials.simple-navbar')
 
 <!-- Content -->
 <div class="container my-5" style="max-width: 750px;">
