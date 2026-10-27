@@ -152,7 +152,7 @@ class AuthController extends Controller
             // توجيه المستخدم حسب الدور
             return match ($user->role) {
                 'admin'   => redirect()->route('admin.dashboard'),
-                'manager' => redirect()->route('manager.dashboard'),
+                'manager' => redirect()->route('manager.home'),
                 'teacher' => redirect()->route('teacher.dashboard'),
                 'mother'  => redirect()->route('mother.dashboard'),
                 default   => redirect()->route('login'),

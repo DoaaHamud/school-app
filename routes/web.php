@@ -29,7 +29,9 @@ Route::middleware('auth')->group(function () {
     // أ. مسارات الأدمن (Admin)
     // --------------------------------------
     Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        // صفحة المؤشرات والرسومات البيانية الجديدة (تكون هي الواجهة الأولى للأدمن)
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+        Route::get('/tasks', [AdminController::class, 'dashboardTasks'])->name('tasks');
 
         // مسار الحسابات المعطلة (تم وضعه قبل مسارات البرامتر لعدم التضارب)
         Route::get('/managers/deactivated', [AdminController::class, 'deactivatedManagers'])->name('managers.deactivated');
@@ -49,6 +51,8 @@ Route::middleware('auth')->group(function () {
     // ب. مسارات المدير (Manager)
     // --------------------------------------
     Route::prefix('manager')->name('manager.')->group(function () {
+
+        Route::get('/home', [ManagerController::class, 'home'])->name('home');
         Route::get('/dashboard', [ManagerController::class, 'dashboard'])->name('dashboard');
         Route::get('/teacher-assignments', [ManagerController::class, 'teacherAssignments'])->name('teacher-assignments');
         Route::get('/notifications/{notificationId}', [ManagerController::class, 'openNotification'])->name('notifications.open');
@@ -62,6 +66,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/profile', [ManagerController::class, 'deleteAccount'])
             ->name('profile.delete');
 
+        Route::get('/classes/{className}/mother-notes', [ManagerController::class, 'showClassMotherNotes'])
+            ->name('classes.mother-notes');
         // موافقة ورفض معلم
         Route::patch('/teachers/{id}/approve', [ManagerController::class, 'approveTeacher'])->name('teachers.approve');
         Route::patch('/mothers/requests/{requestId}/approve', [ManagerController::class, 'approveMotherRequest'])->name('mothers.requests.approve');

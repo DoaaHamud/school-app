@@ -143,15 +143,15 @@ class TeacherController extends Controller
             ->get(['chaldrins.class', 'chaldrins.section']);
 
         $classAliases = $assignedStudents
-            ->groupBy(fn ($student) => $this->normalizeClassSection($student->class))
-            ->map(fn ($students) => $students->pluck('class')->unique()->values());
+            ->groupBy(fn($student) => $this->normalizeClassSection($student->class))
+            ->map(fn($students) => $students->pluck('class')->unique()->values());
         $sectionAliases = $assignedStudents
-            ->filter(fn ($student) => $student->section !== null)
-            ->groupBy(fn ($student) => $this->normalizeClassSection($student->section))
-            ->map(fn ($students) => $students->pluck('section')->unique()->values());
+            ->filter(fn($student) => $student->section !== null)
+            ->groupBy(fn($student) => $this->normalizeClassSection($student->section))
+            ->map(fn($students) => $students->pluck('section')->unique()->values());
 
-        $availableClasses = $classAliases->map(fn ($aliases) => $aliases->first())->values();
-        $availableSections = $sectionAliases->map(fn ($aliases) => $aliases->first())->sort()->values();
+        $availableClasses = $classAliases->map(fn($aliases) => $aliases->first())->values();
+        $availableSections = $sectionAliases->map(fn($aliases) => $aliases->first())->sort()->values();
 
         $searchName = $request->input('search_name');
         $searchClass = $request->input('search_class');
@@ -224,7 +224,7 @@ class TeacherController extends Controller
         ];
 
         // Keep each class-section combination in its own group.
-        $classes = $students->groupBy(fn ($student) => json_encode(
+        $classes = $students->groupBy(fn($student) => json_encode(
             [
                 $this->normalizeClassSection($student->class),
                 $this->normalizeClassSection($student->section),
@@ -477,7 +477,7 @@ class TeacherController extends Controller
         }
 
         return collect($options)
-            ->map(fn ($option) => trim((string) $option))
+            ->map(fn($option) => trim((string) $option))
             ->filter()
             ->unique()
             ->values()
@@ -499,10 +499,10 @@ class TeacherController extends Controller
                 'required',
                 'integer',
                 Rule::exists('users', 'id')->where(
-                    fn ($query) => $query->where('role', 'mother')->where('status', 'approved')
+                    fn($query) => $query->where('role', 'mother')->where('status', 'approved')
                 ),
                 Rule::exists('school_mother_requests', 'mother_id')->where(
-                    fn ($query) => $query
+                    fn($query) => $query
                         ->where('school_id', $teacher->school_id)
                         ->where('status', 'approved')
                 ),
@@ -638,52 +638,88 @@ class TeacherController extends Controller
     // عرض صفحة العلامات الخاصة بالصف مع البحث
     // عرض صفحة العلامات الخاصة بالصف مع دعم البحث (اسم الطالب والتاريخ)
     // عرض صفحة العلامات الخاصة بالصف مع دعم البحث (اسم الطالب، اسم المادة، والتاريخ)
+
     public function showGrades(Request $request, $className)
     {
         $this->checkTeacher();
+
         $teacher = auth()->user();
+        $sectionName = $request->query('section');
 
         $studentsQuery = $teacher->childrenAsTeacher()
             ->where('class', $className);
 
-        if ($request->filled('search_name')) {
-            $studentsQuery->where('name', 'like', '%' . $request->search_name . '%');
+        if ($request->query->has('section')) {
+            if ($sectionName === '') {
+                $studentsQuery->whereNull('section');
+            } else {
+                $studentsQuery->where('section', $sectionName);
+            }
         }
 
-        $students = $studentsQuery->with(['dailyVariables' => function ($query) use ($request) {
-            if ($request->filled('search_date')) {
-                $query->whereDate('report_date', $request->search_date);
-            }
-            if ($request->filled('search_topic')) {
-                $query->where('topic', 'like', '%' . $request->search_topic . '%');
-            }
-        }])->get();
+        if ($request->filled('search_name')) {
+            $studentsQuery->where('name', 'like', '%' . $request->input('search_name') . '%');
+        }
 
-        return view('teacher.grades', compact('students', 'className', 'teacher'));
+        $students = $studentsQuery
+            ->with(['dailyVariables' => function ($query) use ($request) {
+                if ($request->filled('search_date')) {
+                    $query->whereDate('report_date', $request->input('search_date'));
+                }
+
+                if ($request->filled('search_topic')) {
+                    $query->where('topic', 'like', '%' . $request->input('search_topic') . '%');
+                }
+            }])
+            ->get();
+
+        return view('teacher.grades', compact(
+            'students',
+            'className',
+            'sectionName',
+            'teacher'
+        ));
     }
-    // عرض صفحة الملاحظات الخاصة بالصف مع دعم البحث (اسم الطالب والتاريخ)
-    // عرض صفحة الملاحظات الخاصة بالصف مع دعم البحث (اسم الطالب، موضوع الملاحظة، والتاريخ)
+
     public function showNotes(Request $request, $className)
     {
         $this->checkTeacher();
+
         $teacher = auth()->user();
+        $sectionName = $request->query('section');
 
         $studentsQuery = $teacher->childrenAsTeacher()
             ->where('class', $className);
 
-        if ($request->filled('search_name')) {
-            $studentsQuery->where('name', 'like', '%' . $request->search_name . '%');
+        if ($request->query->has('section')) {
+            if ($sectionName === '') {
+                $studentsQuery->whereNull('section');
+            } else {
+                $studentsQuery->where('section', $sectionName);
+            }
         }
 
-        $students = $studentsQuery->with(['dailyVariables' => function ($query) use ($request) {
-            if ($request->filled('search_date')) {
-                $query->whereDate('report_date', $request->search_date);
-            }
-            if ($request->filled('search_topic')) {
-                $query->where('topic', 'like', '%' . $request->search_topic . '%');
-            }
-        }])->get();
+        if ($request->filled('search_name')) {
+            $studentsQuery->where('name', 'like', '%' . $request->input('search_name') . '%');
+        }
 
-        return view('teacher.notes', compact('students', 'className', 'teacher'));
+        $students = $studentsQuery
+            ->with(['dailyVariables' => function ($query) use ($request) {
+                if ($request->filled('search_date')) {
+                    $query->whereDate('report_date', $request->input('search_date'));
+                }
+
+                if ($request->filled('search_topic')) {
+                    $query->where('topic', 'like', '%' . $request->input('search_topic') . '%');
+                }
+            }])
+            ->get();
+
+        return view('teacher.notes', compact(
+            'students',
+            'className',
+            'sectionName',
+            'teacher'
+        ));
     }
 }

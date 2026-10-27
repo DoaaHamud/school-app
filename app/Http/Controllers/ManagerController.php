@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\chaldrin;
 use App\Notifications\TeacherAssignmentNotification;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class ManagerController extends Controller
 {
@@ -62,10 +63,10 @@ class ManagerController extends Controller
         $school = School::findOrFail($schoolId);
         $year = (int) $request->input('year', date('Y'));
         $availableClasses = collect($this->configuredSchoolOptions($school->classes))
-            ->unique(fn ($class) => $this->normalizeSchoolOption($class))
+            ->unique(fn($class) => $this->normalizeSchoolOption($class))
             ->values();
         $availableSections = collect($this->configuredSchoolOptions($school->sections))
-            ->unique(fn ($section) => $this->normalizeSchoolOption($section))
+            ->unique(fn($section) => $this->normalizeSchoolOption($section))
             ->values();
         $approvedTeachers = User::where('role', 'teacher')
             ->where('status', 'approved')
@@ -84,7 +85,7 @@ class ManagerController extends Controller
             }])
             ->get();
         $classAssignments = $students
-            ->groupBy(fn ($student) => json_encode(
+            ->groupBy(fn($student) => json_encode(
                 [
                     $this->normalizeSchoolOption($student->class),
                     $this->normalizeSchoolOption($student->section),
@@ -98,13 +99,13 @@ class ManagerController extends Controller
 
                 return [
                     'className' => $availableClasses->first(
-                        fn ($class) => $this->normalizeSchoolOption($class) === $normalizedClass
+                        fn($class) => $this->normalizeSchoolOption($class) === $normalizedClass
                     ) ?? $firstStudent->class,
                     'sectionName' => $availableSections->first(
-                        fn ($section) => $this->normalizeSchoolOption($section) === $normalizedSection
+                        fn($section) => $this->normalizeSchoolOption($section) === $normalizedSection
                     ) ?? $firstStudent->section,
                     'teachers' => $groupStudents
-                        ->flatMap(fn ($student) => $student->teachers)
+                        ->flatMap(fn($student) => $student->teachers)
                         ->unique('id')
                         ->sortBy('name')
                         ->values(),
@@ -169,13 +170,13 @@ class ManagerController extends Controller
             ->whereYear('created_at', $request->year)
             ->get(['id', 'class', 'section']);
         $classAliases = $schoolStudents
-            ->filter(fn ($student) => $this->normalizeSchoolOption($student->class) === $this->normalizeSchoolOption($request->class))
+            ->filter(fn($student) => $this->normalizeSchoolOption($student->class) === $this->normalizeSchoolOption($request->class))
             ->pluck('class')
             ->unique()
             ->values()
             ->all();
         $sectionAliases = $schoolStudents
-            ->filter(fn ($student) => $this->normalizeSchoolOption($student->section) === $this->normalizeSchoolOption($request->section))
+            ->filter(fn($student) => $this->normalizeSchoolOption($student->section) === $this->normalizeSchoolOption($request->section))
             ->pluck('section')
             ->unique()
             ->values()
@@ -228,7 +229,7 @@ class ManagerController extends Controller
             ->get(['class', 'section']);
         $normalizedClass = $this->normalizeSchoolOption($request->class);
         $classAliases = $schoolStudents
-            ->filter(fn ($student) => $this->normalizeSchoolOption($student->class) === $normalizedClass)
+            ->filter(fn($student) => $this->normalizeSchoolOption($student->class) === $normalizedClass)
             ->pluck('class')
             ->unique()
             ->values()
@@ -243,7 +244,7 @@ class ManagerController extends Controller
         if ($request->filled('section')) {
             $normalizedSection = $this->normalizeSchoolOption($request->section);
             $sectionAliases = $schoolStudents
-                ->filter(fn ($student) => $this->normalizeSchoolOption($student->section) === $normalizedSection)
+                ->filter(fn($student) => $this->normalizeSchoolOption($student->section) === $normalizedSection)
                 ->pluck('section')
                 ->unique()
                 ->values()
@@ -431,7 +432,7 @@ class ManagerController extends Controller
 
         $year = $request->get('year', date('Y'));
 
-        $assignedStudents = fn () => chaldrin::where('school_id', $schoolId)
+        $assignedStudents = fn() => chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $year)
             ->whereHas('teachers', function ($q) use ($teacherId) {
                 $q->where('users.id', $teacherId);
@@ -451,19 +452,19 @@ class ManagerController extends Controller
         $selectedClass = $classes->contains($requestedClass) ? $requestedClass : $classes->first();
         $sectionAliases = $selectedClass
             ? $assignedStudents()
-                ->where('class', $selectedClass)
-                ->whereNotNull('section')
-                ->select('section')
-                ->distinct()
-                ->orderBy('section')
-                ->pluck('section')
-                ->groupBy(fn ($section) => $this->normalizeSchoolOption($section))
+            ->where('class', $selectedClass)
+            ->whereNotNull('section')
+            ->select('section')
+            ->distinct()
+            ->orderBy('section')
+            ->pluck('section')
+            ->groupBy(fn($section) => $this->normalizeSchoolOption($section))
             : collect();
         $requestedSection = $request->input('section');
         $selectedSectionKey = $requestedSection !== null
             ? $this->normalizeSchoolOption($requestedSection)
             : null;
-        $sections = $sectionAliases->map(fn ($aliases) => $aliases->first())->values();
+        $sections = $sectionAliases->map(fn($aliases) => $aliases->first())->values();
         $selectedSection = $selectedSectionKey !== null && $sectionAliases->has($selectedSectionKey)
             ? $sectionAliases->get($selectedSectionKey)->first()
             : '';
@@ -474,9 +475,9 @@ class ManagerController extends Controller
         // عرض طلاب الصف المحدد المسندين لهذا المعلم فقط
         $students = $selectedClass
             ? $assignedStudents()
-                ->where('class', $selectedClass)
-                ->when($selectedSection !== '', fn ($query) => $query->whereIn('section', $selectedSectionAliases))
-                ->get()
+            ->where('class', $selectedClass)
+            ->when($selectedSection !== '', fn($query) => $query->whereIn('section', $selectedSectionAliases))
+            ->get()
             : collect();
 
         return view('manager.assign_teacher', compact(
@@ -561,8 +562,8 @@ class ManagerController extends Controller
             $teacher->setAttribute(
                 'assigned_class_sections',
                 $teacher->childrenAsTeacher
-                    ->filter(fn ($student) => filled($student->class))
-                    ->groupBy(fn ($student) => json_encode([
+                    ->filter(fn($student) => filled($student->class))
+                    ->groupBy(fn($student) => json_encode([
                         $this->normalizeSchoolOption($student->class),
                         $this->normalizeSchoolOption($student->section),
                     ], JSON_UNESCAPED_UNICODE))
@@ -606,15 +607,15 @@ class ManagerController extends Controller
 
         $sectionAliases = chaldrin::where('school_id', $schoolId)
             ->whereYear('created_at', $year)
-            ->when($class, fn ($query) => $query->where('class', $class))
+            ->when($class, fn($query) => $query->where('class', $class))
             ->whereNotNull('section')
             ->select('section')
             ->distinct()
             ->orderBy('section')
             ->pluck('section')
-            ->filter(fn ($section) => $this->normalizeSchoolOption($section) !== '')
-            ->groupBy(fn ($section) => $this->normalizeSchoolOption($section));
-        $sections = $sectionAliases->map(fn ($aliases) => $aliases->first())->values();
+            ->filter(fn($section) => $this->normalizeSchoolOption($section) !== '')
+            ->groupBy(fn($section) => $this->normalizeSchoolOption($section));
+        $sections = $sectionAliases->map(fn($aliases) => $aliases->first())->values();
         $searchSectionKey = $searchSection !== null
             ? $this->normalizeSchoolOption($searchSection)
             : null;
@@ -630,7 +631,7 @@ class ManagerController extends Controller
             ->when($class, function ($query) use ($class) {
                 $query->where('class', $class);
             })
-            ->when($selectedSection !== '', fn ($query) => $query->whereIn('section', $selectedSectionAliases))
+            ->when($selectedSection !== '', fn($query) => $query->whereIn('section', $selectedSectionAliases))
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%');
             })
@@ -666,7 +667,7 @@ class ManagerController extends Controller
         ];
 
         // Keep each class-section combination in its own group.
-        $groupedStudents = $students->groupBy(fn ($student) => json_encode(
+        $groupedStudents = $students->groupBy(fn($student) => json_encode(
             [
                 $this->normalizeSchoolOption($student->class),
                 $this->normalizeSchoolOption($student->section),
@@ -825,17 +826,30 @@ class ManagerController extends Controller
     }
 
     // عرض صفحة علامات الصف بالكامل للمدير
+    // 1. عرض صفحة علامات الصف والشعبة للمدير
     public function showClassGrades(Request $request, $className)
     {
         $this->checkManager();
         $schoolId = $this->schoolId();
 
+        $sectionName = $request->query('section');
         $searchName = $request->get('search_name');
         $searchTopic = $request->get('search_topic');
         $selectedYear = $request->get('year', date('Y'));
 
-        $students = chaldrin::where('school_id', $schoolId)
-            ->where('class', $className)
+        $studentsQuery = chaldrin::where('school_id', $schoolId)
+            ->where('class', $className);
+
+        // فلترة الشعبة بدقة إذا تم تمريرها
+        if ($request->query->has('section')) {
+            if ($sectionName === '' || $sectionName === null) {
+                $studentsQuery->whereNull('section');
+            } else {
+                $studentsQuery->where('section', $sectionName);
+            }
+        }
+
+        $students = $studentsQuery
             ->when($searchName, function ($query) use ($searchName) {
                 $query->where('name', 'like', '%' . $searchName . '%');
             })
@@ -849,21 +863,32 @@ class ManagerController extends Controller
             }, 'teachers'])
             ->get();
 
-        return view('manager.classes_grades', compact('students', 'className', 'searchName', 'searchTopic', 'selectedYear'));
+        return view('manager.classes_grades', compact('students', 'className', 'sectionName', 'searchName', 'searchTopic', 'selectedYear'));
     }
 
-    // عرض صفحة ملاحظات الصف بالكامل للمدير
+    // 2. عرض صفحة ملاحظات الصف والشعبة للمدير
     public function showClassNotes(Request $request, $className)
     {
         $this->checkManager();
         $schoolId = $this->schoolId();
 
+        $sectionName = $request->query('section');
         $searchName = $request->get('search_name');
         $searchNotes = $request->get('search_notes');
         $selectedYear = $request->get('year', date('Y'));
 
-        $students = chaldrin::where('school_id', $schoolId)
-            ->where('class', $className)
+        $studentsQuery = chaldrin::where('school_id', $schoolId)
+            ->where('class', $className);
+
+        if ($request->query->has('section')) {
+            if ($sectionName === '' || $sectionName === null) {
+                $studentsQuery->whereNull('section');
+            } else {
+                $studentsQuery->where('section', $sectionName);
+            }
+        }
+
+        $students = $studentsQuery
             ->when($searchName, function ($query) use ($searchName) {
                 $query->where('name', 'like', '%' . $searchName . '%');
             })
@@ -877,9 +902,8 @@ class ManagerController extends Controller
             }, 'teachers'])
             ->get();
 
-        return view('manager.classes_notes', compact('students', 'className', 'searchName', 'searchNotes', 'selectedYear'));
+        return view('manager.classes_notes', compact('students', 'className', 'sectionName', 'searchName', 'searchNotes', 'selectedYear'));
     }
-
     // تحديث إعدادات الروضة (الاسم، الشعار، الألوان)
     public function updateSettings(Request $request)
     {
@@ -923,7 +947,7 @@ class ManagerController extends Controller
         }
 
         return collect(preg_split('/[,،\r\n]+/u', $value) ?: [])
-            ->map(fn ($option) => trim($option))
+            ->map(fn($option) => trim($option))
             ->filter()
             ->unique()
             ->values()
@@ -937,7 +961,7 @@ class ManagerController extends Controller
         }
 
         return collect($value ?? [])
-            ->map(fn ($option) => trim((string) $option))
+            ->map(fn($option) => trim((string) $option))
             ->filter()
             ->unique()
             ->values()
@@ -952,5 +976,134 @@ class ManagerController extends Controller
         $value = strtr($value, ['أ' => 'ا', 'إ' => 'ا', 'آ' => 'ا', 'ٱ' => 'ا']);
 
         return preg_replace('/\s+/u', ' ', $value) ?? $value;
+    }
+
+
+    // 3. عرض ملاحظات الأهالي الخاصة بالصف والشعبة المحددة للمدير
+    public function showClassMotherNotes(Request $request, $className)
+    {
+        $this->checkManager();
+        $schoolId = $this->schoolId();
+
+        $sectionName = $request->query('section');
+        $searchName = $request->get('search_name');
+
+        $studentsQuery = chaldrin::where('school_id', $schoolId)
+            ->where('class', $className);
+
+        if ($request->query->has('section')) {
+            if ($sectionName === '' || $sectionName === null) {
+                $studentsQuery->whereNull('section');
+            } else {
+                $studentsQuery->where('section', $sectionName);
+            }
+        }
+
+        if (!empty($searchName)) {
+            $studentsQuery->where('name', 'like', '%' . $searchName . '%');
+        }
+
+        $studentIds = $studentsQuery->pluck('id');
+
+        // تعديل childid إلى child_id ليطابق قاعدة البيانات
+        $childNotes = \App\Models\MotherChildNote::whereIn('child_id', $studentIds)
+            ->with(['child:id,name,class,section', 'mother:id,name', 'teacher:id,name'])
+            ->latest()
+            ->get();
+
+        return view('manager.class_mother_notes', compact('childNotes', 'className', 'sectionName', 'searchName'));
+    }
+
+    public function home()
+    {
+        $this->checkManager();
+        $schoolId = $this->schoolId();
+
+        $stats = [
+            'students_count' => chaldrin::where('school_id', $schoolId)->count(),
+
+            'teachers_count' => User::where('school_id', $schoolId)
+                ->where('role', 'teacher')
+                ->where('status', 'approved')
+                ->count(),
+
+            'mothers_count' => SchoolMotherRequest::where('school_id', $schoolId)
+                ->where('status', 'approved')
+                ->distinct()
+                ->count('mother_id'),
+        ];
+
+        $driver = DB::connection()->getDriverName();
+
+        $monthExpression = static function (string $column) use ($driver): string {
+            return $driver === 'sqlite'
+                ? "strftime('%Y-%m', {$column})"
+                : "DATE_FORMAT({$column}, '%Y-%m')";
+        };
+
+        $teachersTimeline = User::where('school_id', $schoolId)
+            ->where('role', 'teacher')
+            ->where('status', 'approved')
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw($monthExpression('created_at') . ' as month')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $studentsTimeline = DB::table('chaldrins')
+            ->where('school_id', $schoolId)
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw($monthExpression('created_at') . ' as month')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $mothersTimeline = DB::table('school_mother_requests')
+            ->where('school_id', $schoolId)
+            ->where('status', 'approved')
+            ->selectRaw('COUNT(DISTINCT mother_id) as count')
+            ->selectRaw($monthExpression('created_at') . ' as month')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $motherNotesTimeline = DB::table('mother_child_notes as notes')
+            ->join('chaldrins as children', 'children.id', '=', 'notes.child_id')
+            ->where('children.school_id', $schoolId)
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw($monthExpression('notes.created_at') . ' as month')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $teacherRepliesTimeline = DB::table('mother_child_notes as notes')
+            ->join('chaldrins as children', 'children.id', '=', 'notes.child_id')
+            ->where('children.school_id', $schoolId)
+            ->whereNotNull('notes.reply')
+            ->whereNotNull('notes.replied_at')
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw($monthExpression('notes.replied_at') . ' as month')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $dailyVariablesTimeline = DB::table('daily_variables as variables')
+            ->join('chaldrins as children', 'children.id', '=', 'variables.child_id')
+            ->where('children.school_id', $schoolId)
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw($monthExpression('variables.report_date') . ' as month')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        return view('manager.home', compact(
+            'stats',
+            'teachersTimeline',
+            'studentsTimeline',
+            'mothersTimeline',
+            'motherNotesTimeline',
+            'teacherRepliesTimeline',
+            'dailyVariablesTimeline'
+        ));
     }
 }

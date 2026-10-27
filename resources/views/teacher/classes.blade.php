@@ -178,30 +178,125 @@
         padding: 18px;
     }
 
-    /* Class Card */
+    /* بطاقات الصفوف */
     .class-card {
         border: 1px solid #e8ebef;
         border-radius: 18px;
         overflow: hidden;
-        background-color: white;
+        background-color: #ffffff;
         box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
     }
 
-    .class-header {
+    .class-toggle {
+        width: 100%;
+        border: 0;
         background-color: var(--primary-color);
         color: #ffffff;
-        padding: 14px 18px;
+        text-align: right;
+        padding: 16px 20px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
         gap: 10px;
+        transition: filter 0.2s;
     }
 
-    .class-header h4 {
-        margin: 0;
+    .class-toggle:hover,
+    .class-toggle:focus {
+        color: #ffffff;
+        filter: brightness(0.94);
+    }
+
+    .class-toggle:focus-visible,
+    .section-toggle:focus-visible {
+        outline: 3px solid rgba(255, 255, 255, 0.75);
+        outline-offset: -5px;
+    }
+
+    .class-toggle .class-title {
         font-size: 18px;
-        font-weight: 600;
+        font-weight: 700;
+    }
+
+    .class-toggle .toggle-icon,
+    .section-toggle .toggle-icon {
+        margin-right: auto;
+        transition: transform 0.2s ease;
+    }
+
+    .class-toggle[aria-expanded="true"] .toggle-icon,
+    .section-toggle[aria-expanded="true"] .toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .class-content {
+        padding: 16px;
+        background-color: #f8fafc;
+    }
+
+    /* بطاقات الشعب */
+    .section-card {
+        border: 1px solid #e3e8ef;
+        border-radius: 14px;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+
+    .section-card+.section-card {
+        margin-top: 14px;
+    }
+
+    .section-header {
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        background-color: #ffffff;
+    }
+
+    .section-toggle {
+        border: 0;
+        background: transparent;
+        color: #1f2937;
+        padding: 4px 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .section-toggle:hover,
+    .section-toggle:focus {
+        color: var(--primary-color);
+    }
+
+    .section-toggle .section-icon {
+        color: var(--primary-color);
+    }
+
+    .section-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .school-color-btn,
+    .school-color-btn:hover,
+    .school-color-btn:focus {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: #ffffff !important;
+    }
+
+    .school-color-btn:hover,
+    .school-color-btn:focus {
+        filter: brightness(0.9);
+    }
+
+    .section-students {
+        border-top: 1px solid #e8ebef;
     }
 
     .btn-primary {
@@ -231,18 +326,6 @@
         opacity: 0.9;
     }
 
-    .class-header .btn-light {
-        color: var(--primary-color) !important;
-        border: 0;
-        border-radius: 8px;
-        font-size: 13px;
-    }
-
-    .class-header .btn-light:hover {
-        background: #f8f9fa;
-        filter: brightness(0.96);
-    }
-
     .student-average-badge {
         background-color: var(--primary-color);
         color: #ffffff;
@@ -257,22 +340,14 @@
         white-space: nowrap;
     }
 
-    .class-card>.card-body table thead th {
+    .section-students table thead th {
         color: #111827;
         font-weight: 700;
         border-bottom-color: #d9dee5;
     }
 
-    .class-card>.card-body>.table-responsive>table>tbody>tr>td {
+    .section-students table tbody td {
         padding: 10px 12px;
-    }
-
-    .class-card>.card-body {
-        padding: 0;
-    }
-
-    .class-card>.card-body>.table-responsive {
-        padding: 0;
     }
 
     @media (max-width: 991px) {
@@ -288,44 +363,93 @@
             padding: 25px 15px;
         }
     }
+
+    @media (max-width: 576px) {
+        .class-toggle {
+            width: 100%;
+            border: 0;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            text-align: right;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: filter 0.2s;
+        }
+
+        .class-toggle:hover,
+        .class-toggle:focus {
+            color: #ffffff;
+            filter: brightness(0.94);
+        }
+
+        .class-toggle .class-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .class-content {
+            padding: 12px;
+            background-color: #f8fafc;
+        }
+
+        .section-header {
+            align-items: flex-start;
+        }
+
+        .section-actions {
+            width: 100%;
+        }
+
+        .section-actions .btn {
+            flex: 1 1 auto;
+        }
+    }
 </style>
 
-
-<!-- Main -->
 <main class="main-container">
 
-    <!-- Page Header -->
     <div class="page-title">
         <h2>صفوف المعلم</h2>
-        <p>عرض الأطفال المرتبطين بك ضمن الصفوف الدراسية.</p>
+        <p>اختر الصف ثم الشعبة لعرض الطلاب المرتبطين بك.</p>
     </div>
 
-    <!-- Search Filter Form -->
     <div class="filter-box">
         <div class="filter-heading">
-            <i class="bi bi-funnel-fill ms-1" style="color: var(--primary-color);"></i>
+            <i class="bi bi-funnel-fill ms-1"></i>
             البحث والتصفية
         </div>
+
         <form action="{{ route('teacher.classes') }}" method="GET" class="row g-3 align-items-end filter-form">
 
-            <!-- البحث باسم الطالب -->
             <div class="col-md-2">
                 <label class="form-label fw-bold small text-secondary">اسم الطالب</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search_name" class="form-control" placeholder="ابحث باسم الطالب..." value="{{ request('search_name') }}">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input
+                        type="text"
+                        name="search_name"
+                        class="form-control"
+                        placeholder="ابحث باسم الطالب..."
+                        value="{{ request('search_name') }}">
                 </div>
             </div>
 
-            <!-- قائمة منسدلة لأسماء الصفوف الموجودة -->
             <div class="col-md-2">
                 <label class="form-label fw-bold small text-secondary">الصف الدراسي</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="bi bi-mortarboard"></i></span>
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-mortarboard"></i>
+                    </span>
                     <select name="search_class" class="form-select">
                         <option value="">-- كل الصفوف --</option>
                         @foreach($availableClasses as $classNameOption)
-                        <option value="{{ $classNameOption }}" {{ $selectedClassOption === $classNameOption ? 'selected' : '' }}>
+                        <option
+                            value="{{ $classNameOption }}"
+                            {{ $selectedClassOption === $classNameOption ? 'selected' : '' }}>
                             {{ $classNameOption }}
                         </option>
                         @endforeach
@@ -336,11 +460,15 @@
             <div class="col-md-2">
                 <label class="form-label fw-bold small text-secondary">الشعبة</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="bi bi-people"></i></span>
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-people"></i>
+                    </span>
                     <select name="search_section" class="form-select">
                         <option value="">-- كل الشُعَب --</option>
                         @foreach($availableSections as $sectionOption)
-                        <option value="{{ $sectionOption }}" {{ $selectedSectionOption === $sectionOption ? 'selected' : '' }}>
+                        <option
+                            value="{{ $sectionOption }}"
+                            {{ $selectedSectionOption === $sectionOption ? 'selected' : '' }}>
                             {{ $sectionOption }}
                         </option>
                         @endforeach
@@ -348,22 +476,37 @@
                 </div>
             </div>
 
-            <!-- البحث بالتاريخ -->
             <div class="col-md-2">
                 <label class="form-label fw-bold small text-secondary">تاريخ التقرير اليومي</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="bi bi-calendar-date"></i></span>
-                    <input type="text" class="form-control" data-date-filter placeholder="يوم/شهر/سنة" inputmode="numeric" autocomplete="off" dir="ltr" style="text-align: left;">
-                    <input type="hidden" name="search_date" value="{{ request('search_date') }}">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-calendar-date"></i>
+                    </span>
+                    <input
+                        type="text"
+                        class="form-control"
+                        data-date-filter
+                        placeholder="يوم/شهر/سنة"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        dir="ltr"
+                        style="text-align: left;">
+                    <input
+                        type="hidden"
+                        name="search_date"
+                        value="{{ request('search_date') }}">
                 </div>
             </div>
 
-            <!-- أزرار الإجراءات -->
             <div class="col-md-4 d-flex gap-2">
                 <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-filter me-1"></i> بحث
+                    <i class="bi bi-filter me-1"></i>
+                    بحث
                 </button>
-                <a href="{{ route('teacher.classes') }}" class="btn btn-outline-secondary" title="إعادة تعيين">
+                <a
+                    href="{{ route('teacher.classes') }}"
+                    class="btn btn-outline-secondary"
+                    title="إعادة تعيين">
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </a>
             </div>
@@ -371,120 +514,167 @@
     </div>
 
     @if($classes->isEmpty())
-    <!-- No Students -->
     <div class="alert alert-info text-center py-4">
         <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
         لا توجد نتائج تطابق بحثك أو لا يوجد طلاب مرتبطون بك حالياً.
     </div>
     @else
 
-    @foreach($classes as $classGroup)
     @php
-    $className = $classGroup['className'];
-    $sectionName = $classGroup['sectionName'];
-    $children = $classGroup['children'];
+    $classesGroupedByName = $classes->groupBy('className');
     @endphp
 
-    <!-- Class Card -->
-    <div class="card class-card mb-4">
+    @foreach($classesGroupedByName as $sectionsForClass)
+    @php
+    $className = $sectionsForClass->first()['className'];
+    $classCollapseId = 'teacher-class-' . $loop->index;
+    @endphp
 
-        <!-- Class Header -->
-        <div class="class-header">
-            <h4>
-                <i class="bi bi-mortarboard me-1"></i>الصف: {{ $className }}
-                <span class="me-2">— الشعبة: {{ $sectionName ?: 'غير محددة' }}</span>
-            </h4>
+    <section class="class-card mb-4">
+        <h3 class="m-0">
+            <button
+                type="button"
+                class="class-toggle"
+                data-bs-toggle="collapse"
+                data-bs-target="#{{ $classCollapseId }}"
+                aria-expanded="false"
+                aria-controls="{{ $classCollapseId }}">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span class="class-title">الصف: {{ $className ?: 'غير محدد' }}</span>
+                <span class="badge bg-light text-dark rounded-pill">
+                    {{ $sectionsForClass->count() }} شعبة
+                </span>
+                <i class="bi bi-chevron-down toggle-icon"></i>
+            </button>
+        </h3>
 
-            <!-- أزرار الانتقال إلى صفحات مستقلة لعرض العلامات والملاحظات مع دعم تمرير البحث -->
-            <div class="d-flex gap-2">
-                <a href="{{ route('teacher.classes.grades', ['class' => $className, 'search_name' => request('search_name'), 'search_date' => request('search_date')]) }}" class="btn btn-light btn-sm fw-bold text-primary px-3 text-decoration-none">
-                    <i class="bi bi-award me-1"></i> عرض العلامات
-                </a>
-                <a href="{{ route('teacher.classes.notes', ['class' => $className, 'search_name' => request('search_name'), 'search_date' => request('search_date')]) }}" class="btn btn-light btn-sm fw-bold text-dark px-3 text-decoration-none">
-                    <i class="bi bi-journal-text me-1"></i> عرض الملاحظات
-                </a>
+        <div class="collapse" id="{{ $classCollapseId }}">
+            <div class="class-content">
+
+                @foreach($sectionsForClass as $sectionGroup)
+                @php
+                $sectionName = $sectionGroup['sectionName'];
+                $children = $sectionGroup['children'];
+                $sectionCollapseId = $classCollapseId . '-section-' . $loop->index;
+                @endphp
+
+                <section class="section-card">
+                    <div class="section-header">
+                        <button
+                            type="button"
+                            class="section-toggle"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#{{ $sectionCollapseId }}"
+                            aria-expanded="false"
+                            aria-controls="{{ $sectionCollapseId }}">
+                            <i class="bi bi-diagram-3 section-icon"></i>
+                            <span>الشعبة: {{ $sectionName ?: 'غير محددة' }}</span>
+                            <span class="badge bg-secondary rounded-pill">
+                                {{ $children->count() }} طالب
+                            </span>
+                            <i class="bi bi-chevron-down toggle-icon"></i>
+                        </button>
+
+                        <div class="section-actions">
+                            <!-- زر عرض العلامات (محدد حسب الصف والشعبة) -->
+                            <a
+                                href="{{ route('teacher.classes.grades', ['class' => $className, 'section' => $sectionName]) }}"
+                                class="btn btn-sm school-color-btn">
+                                <i class="bi bi-award ms-1"></i>
+                                عرض العلامات
+                            </a>
+
+                            <!-- زر عرض الملاحظات (محدد حسب الصف والشعبة) -->
+                            <a
+                                href="{{ route('teacher.classes.notes', ['class' => $className, 'section' => $sectionName]) }}"
+                                class="btn btn-sm school-color-btn">
+                                <i class="bi bi-journal-text ms-1"></i>
+                                عرض الملاحظات
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="collapse section-students" id="{{ $sectionCollapseId }}">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 text-center">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>اسم الطالب</th>
+                                        <th>الجنس</th>
+                                        <th>العمر</th>
+                                        <th>الحالة الصحية</th>
+                                        <th>المعدل العام للطالب</th>
+                                        <th>ولي الأمر</th>
+                                        <th>المتغيرات اليومية</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach($children as $index => $child)
+                                    @php
+                                    $studentResults = $child->dailyVariables
+                                    ->pluck('result')
+                                    ->filter(fn($value) => is_numeric($value));
+
+                                    $studentAverage = $studentResults->count() > 0
+                                    ? round($studentResults->average(), 1)
+                                    : null;
+                                    @endphp
+
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>
+                                            <strong>{{ $child->name }}</strong>
+                                        </td>
+                                        <td>
+                                            @if($child->gender === 'male')
+                                            ذكر
+                                            @elseif($child->gender === 'female')
+                                            أنثى
+                                            @else
+                                            -
+                                            @endif
+                                        </td>
+                                        <td>{{ $child->age ?? '-' }}</td>
+                                        <td>{{ $child->Health_status ?? '-' }}</td>
+                                        <td>
+                                            @if($studentAverage !== null)
+                                            <span class="badge student-average-badge fs-6 px-3 py-1">
+                                                {{ $studentAverage }}
+                                            </span>
+                                            @else
+                                            <span class="text-muted small">لا توجد علامات</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $child->mother?->name ?? '-' }}</td>
+                                        <td>
+                                            @if($child->dailyVariables->count() > 0)
+                                            <a
+                                                class="btn btn-daily-data btn-sm"
+                                                href="{{ route('teacher.student.show', $child->id) }}">
+                                                <i class="bi bi-eye me-1"></i>
+                                                عرض البيانات ({{ $child->dailyVariables->count() }})
+                                            </a>
+                                            @else
+                                            <span class="text-muted">لا توجد بيانات</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                @endforeach
+
             </div>
         </div>
-
-        <!-- Class Body (جدول الأطفال) -->
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 text-center">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>اسم الطالب</th>
-                            <th>الجنس</th>
-                            <th>العمر</th>
-                            <th>الحالة الصحية</th>
-                            <th>المعدل العام للطالب</th>
-                            <th>ولي الأمر</th>
-                            <th>المتغيرات اليومية</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @foreach($children as $index => $child)
-
-                        <!-- معلومات الطفل -->
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>
-                                <strong>{{ $child->name }}</strong>
-                            </td>
-                            <td>
-                                @if($child->gender == 'male')
-                                ذكر
-                                @elseif($child->gender == 'female')
-                                أنثى
-                                @else
-                                -
-                                @endif
-                            </td>
-                            <td>{{ $child->age ?? '-' }}</td>
-                            <td>{{ $child->Health_status ?? '-' }}</td>
-
-                            <!-- المعدل العام لكل طالب -->
-                            <td>
-                                @php
-                                $studentResults = $child->dailyVariables->pluck('result')->filter(fn($val) => is_numeric($val));
-                                $studentAverage = $studentResults->count() > 0 ? round($studentResults->average(), 1) : null;
-                                @endphp
-
-                                @if($studentAverage !== null)
-                                <span class="badge student-average-badge fs-6 px-3 py-1">
-                                    {{ $studentAverage }}
-                                </span>
-                                @else
-                                <span class="text-muted small">لا توجد علامات</span>
-                                @endif
-                            </td>
-
-                            <td>{{ $child->mother?->name ?? '-' }}</td>
-
-                            <td>
-                                @if($child->dailyVariables->count() > 0)
-                                <a class="btn btn-daily-data btn-sm" href="{{ route('teacher.student.show', $child->id) }}">
-                                    <i class="bi bi-eye me-1"></i> عرض البيانات ({{ $child->dailyVariables->count() }})
-                                </a>
-                                @else
-                                <span class="text-muted">لا توجد بيانات</span>
-                                @endif
-                            </td>
-                        </tr>
-
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-
+    </section>
     @endforeach
 
     @endif
-
 </main>
 
 @endsection
